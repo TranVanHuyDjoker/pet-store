@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container rounded bg-white">
+        <div id="alert"></div>
+        <div class="row d-flex justify-content-center pb-5">
+            <div class="col-sm-5 col-md-5 ml-1">
+                <h4>Hãng vận chuyển</h4>
+                <div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row align-content-center">
+                            <div class="pt-2 pr-2"><input value="VIETTEL" type="radio" name="delivery"></div>
+                            <div class="rounded border d-flex w-100 px-2">
+                                <div class="pt-2">
+                                    <p>VIETTEL POST(2-3 ngày)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row w-100">
+                            <div class="pt-2 pr-2"><input value="GIAO_HANG_TIET_KIEM" type="radio" name="delivery">
+                            </div>
+                            <div class="rounded d-flex w-100 px-2">
+                                <div class="pt-2">
+                                    <p>GIAOHANGTIETKIEM(3-4 ngày)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row w-100">
+                            <div class="pt-2 pr-2"><input value="POST" type="radio" name="delivery"></div>
+                            <div class="rounded d-flex w-100 px-2">
+                                <div class="pt-2">
+                                    <p>BƯU ĐIỆN(4-5 ngày)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="delivery-error" style="color: #bb2d3b"></div>
+                <hr>
+                <div class="pt-2">
+                    <div class="d-flex">
+                        <h4>Phương thức thanh toán</h4>
+                    </div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row align-content-center">
+                            <div class="pt-2 pr-2"><input type="radio" value="COD" name="payment-method"></div>
+                            <div class="rounded border d-flex w-100 px-2">
+                                <div class="pt-2">
+                                    <p>COD</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row w-100">
+                            <div class="pt-2 pr-2"><input type="radio" value="PAYPAL" name="payment-method"></div>
+                            <div class="rounded d-flex w-100 px-2">
+                                <div class="pt-2">
+                                    <p>PAYPAL</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="payment-error" style="color: #bb2d3b"></div>
+                    <div><input id="checkout" type="button" value="Tiến hành thanh toán"
+                                class="btn btn-primary btn-block"></div>
+                    <div id="spinner" class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3 col-md-4 offset-md-1 mobile">
+                <div class="py-4 d-flex justify-content-end">
+                    <h6><a href="/cart">Quay trở lại giỏ hàng</a></h6>
+                </div>
+                <div class="bg-light rounded d-flex flex-column">
+                    <div class="p-2 ml-3">
+                        <h4>Tổng hoá đơn</h4>
+                    </div>
+                    <div id="items">
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+                    <div class="p-2 d-flex pt-3">
+                        <div class="col-8">Hãng ship: <span id="delivery"></span></div>
+                        <div class="ml-auto">$<span id="shipPrice"></span></div>
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+                    <div class="p-2 d-flex pt-3">
+                        <div class="col-8"><b>Tổng thành tiền: </b></div>
+                        <div class="ml-auto"><b class="green">$<span id="total-price"></span></b></div>
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+
+                </div>
+                <div>
+                    <form onsubmit="promotionCodeFormSubmit(event)">
+
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="customRadioInline1" value="DELIVERY" name="promotionCodeType"
+                                   class="custom-control-input">
+                            <label class="custom-control-label" for="customRadioInline1">Vận chuyển</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" id="customRadioInline2" value="PET" name="promotionCodeType"
+                                   class="custom-control-input">
+                            <label class="custom-control-label" for="customRadioInline2">Thú cưng</label>
+                        </div>
+                        <input type="text" id="promotionCodeInput" class="form-control"/>
+                        <div id="code-alert"></div>
+                        <button type="submit" class="btn btn-primary">Áp dụng</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let cart = null;
+        let deliveries = [];
+        let delivery = null;
+        let paymentMethod = "";
+        let price = 0;
+        let user = null;
+        let totalPrice = 0;
+        let promotionCodeType = "";
+        let salePetPrice = 0;
+        let saleDeliveryPrice = 0;
+        let petCode = "";
+        let deliveryCode = "";
+
+        $(document).ready(function () {
+            getUserInfo();
+            getDeliveries();
+            cart = localStorage.getItem("cart") == null ? [] : JSON.parse(localStorage.getItem("cart"));
+            renderTotalPrice();
+            $("#spinner").hide();
+            renderItems(cart);
+        })
+
+        function renderTotalPrice() {
+            cart.forEach((item, index) => {
+                totalPrice += item.price;
+            })
+            $("#total-price").append(totalPrice);
+        }
+
+        function getUserInfo() {
+            $.get({
+                url: `${baseUrl}/api/v1/users/information`,
+                dataType: 'json',
+                contentType: 'application/json',
+            })
+                .done(xhr => {
+                    user = xhr;
+                }).fail(xhr => {
+                window.location.href = ` ${baseUrl}/information`;
+                return;
+            })
+        }
+
+        $("#checkout").click(function () {
+            let orderItems = [];
+            let promotionCodes = [];
+            cart.forEach(item => {
+                orderItems.push({
+                    petId: item.petId,
+                    price: item.price
+                })
+            });
+            if(cart.length ==0){
+                window.location.href = "/cart";
+            }
+            if (delivery == null) {
+                $("#delivery-error").text("Vui lòng chọn hãng vận chuyển");
+                return;
+            }
+            if (paymentMethod == "") {
+                $("#payment-error").text("Vui lòng chọn hãng vận chuyển");
+                return;
+            }
+
+            promotionCodes.push(deliveryCode);
+            promotionCodes.push(petCode);
+            console.log(delivery);
+            order = {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                phonenumber: user.phonenumber,
+                address: user.address,
+                orderItems: orderItems,
+                promotionCodes: promotionCodes,
+                totalPrice: totalPrice,
+                shipPrice: delivery.shipPrice,
+                paymentMethod: paymentMethod,
+                salePrice: salePetPrice + saleDeliveryPrice,
+                delivery: delivery.name
+            }
+            localStorage.setItem("order", JSON.stringify(order));
+
+            if (paymentMethod == "COD") {
+                createOrderWithCod(order);
+                $("#delivery-error").empty();
+                $("#payment-error").empty();
+                return;
+            }
+            createOrderWithPaypal(order);
+            $("#delivery-error").empty();
+            $("#payment-error").empty();
+        });
+
+        $("input[type=radio][name=delivery]").change(function () {
+
+            delivery = deliveries.find(deli => deli.name == this.value);
+            $("#total-price").empty();
+            $("#shipPrice").empty();
+            let total = delivery.shipPrice + totalPrice - salePetPrice - saleDeliveryPrice;
+            console.log("1S"+total);
+            $("#shipPrice").append(`${delivery.shipPrice}`);
+            $("#total-price").append(`${total}`);
+
+        })
+
+        $("input[type=radio][name=promotionCodeType]").change(function () {
+            promotionCodeType = this.value;
+        })
+
+        $("input[type=radio][name=payment-method]").change(function () {
+            paymentMethod = this.value;
+        })
+
+        function getDeliveries() {
+            $.get({
+                url: `${baseUrl}/api/v1/deliveries`,
+                dataType: 'json',
+                contentType: 'application/json',
+            })
+                .done(function (xhr) {
+                    deliveries = xhr;
+                })
+                .fail(function (xhr) {
+                    console.log(xhr);
+                })
+        }
+
+        function renderItems(cart) {
+            cart.map(item => {
+                $("#items").append(`
+                    <div class="p-2 d-flex">
+                        <div class="col-4">${item.petName}</div>
+                        <div class="col-1" style="background: ${item.color}; width: 20px; height: 20px"> </div>
+                        <div class="ml-auto">$ ${item.price}</div>
+                    </div>
+                `)
+            })
+        }
+
+        function createOrderWithCod(order) {
+            $.post({
+                url: `${baseUrl}/api/v1/orders/cod`,
+                data: JSON.stringify(order),
+                dataType: 'json',
+                contentType: 'application/json',
+                beforeSend: () => {
+                    $("#spinner").show();
+                },
+                complete: function () {
+                    $("#spinner").hide();
+                },
+            }).done(function (xhr) {
+                if (xhr) {
+                    localStorage.removeItem("cart");
+                    localStorage.removeItem("order");
+                    $("#alert").empty();
+                    $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Bạn đã đặt hàng thành công. Vui lòng kiểm tra Email để xác nhận đơn hàng
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        `)
+                }
+            }).fail(function (xhr) {
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            Đã xảy ra lỗi vui lòng thử lại sau
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        `)
+            })
+        }
+
+        function promotionCodeFormSubmit(event) {
+            event.preventDefault();
+            $("#code-alert").empty();
+            if (delivery == null && promotionCodeType == "DELIVERY") {
+                $("#code-alert").append(`
+                   <span style="color: red">Vui lòng chọn hãng vận chuyển trước khi áp dụng mã</span>
+                `)
+                return;
+            }
+            if (delivery != null || promotionCodeType == "PET") {
+                let request = {
+                    type: promotionCodeType,
+                    code: $("#promotionCodeInput").val(),
+                    totalAmount: totalPrice
+                }
+                applyPromotionCode(request);
+            }
+
+        }
+
+        function applyPromotionCode(data) {
+            $.post({
+                url: `${baseUrl}/api/v1/promotion-codes/apply`,
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json'
+            }).done(function (xhr) {
+                $("#code-alert").empty();
+                $("#total-price").empty();
+                promotionCode = xhr;
+                checkPromotionCode(promotionCode);
+                let total = totalPrice + delivery.shipPrice - saleDeliveryPrice - salePetPrice;
+                console.log("2s" + total);
+                if (total < 0) total = 0;
+                $("#total-price").append(`${total}`);
+                $("#code-alert").append(`
+                    <span style="color: limegreen">Áp dụng mã giảm giá ${promotionCodeType == "PET" ? "thú cưng" : "vận chuyển"} thành công</span>
+                `)
+            }).fail(function (xhr) {
+                $("#code-alert").empty();
+                $("#code-alert").append(`
+                   <span style="color: red">${xhr.responseJSON.message}</span>
+                `)
+            })
+        }
+
+        function checkPromotionCode(code) {
+            if (code.codeApplyType == "PET") {
+                if (salePetPrice > 0) salePetPrice = 0;
+                if (code.codeType == "PERCENT") {
+                    salePetPrice = totalPrice * (code.saleAmount / 100);
+                } else {
+                    salePetPrice = code.saleAmount;
+                }
+              petCode = code.code;
+            } else {
+                if (saleDeliveryPrice > 0) salePetPrice = 0;
+                if (code.codeType == "PERCENT") {
+                    if (delivery != null) {
+                        saleDeliveryPrice = delivery.shipPrice * (code.saleAmount / 100);
+                    }
+                } else {
+                    if (delivery != null) {
+                        saleDeliveryPrice = code.saleAmount;
+                    }
+                }
+              deliveryCode = code.code;
+            }
+        }
+
+        function createOrderWithPaypal(order) {
+            $.post({
+                url: `${baseUrl}/api/v1/paypal/payment`,
+                data: JSON.stringify(order),
+                dataType: 'text',
+                contentType: 'application/json',
+                beforeSend: () => {
+                    $("#spinner").show();
+                },
+                complete: function () {
+                    $("#spinner").hide();
+                },
+            }).done(function (xhr) {
+                window.location.href = xhr;
+            }).fail(function (xhr) {
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            Đã xảy ra lỗi vui lòng thử lại sau
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        `)
+            })
+        }
+    </script>
+</th:block>
+</html>

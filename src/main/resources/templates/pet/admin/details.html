@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <a href="/admin/pets">&lt; Thú cưng</a>
+        <div class="mt-2" id="alert"></div>
+        <form id="submit-form" onsubmit="submitForm(event)">
+            <div class="row">
+                <div class="col-5">
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="age">Tuổi thú cưng</label>
+                            <input type="number" class="form-control" id="age" name="age"
+                                   placeholder="Nhập tuổi thú cưng">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="dad-type">Bố thú cưng</label>
+                            <input type="text" class="form-control" id="dad-type" name="dadType"
+                                   placeholder="Nhập bố thú cưng">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="mom-type">Mẹ thú cưng</label>
+                            <input type="text" class="form-control" id="mom-type" name="momType"
+                                   placeholder="Nhập mẹ thú cưng">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="purebled">Độ thuần chủng</label>
+                            <select name="purebled" id="purebled" class="form-control">
+                                <option selected>Chọn...</option>
+                                <option value="100">100%</option>
+                                <option value="50">50%</option>
+                                <option value="25">25%</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="vaccination">Tiêm phòng</label>
+                            <input name="vaccination" type="text" class="form-control" id="vaccination"
+                                   placeholder="Nhập vaccin đã tiêm ">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-7">
+                    <div class="form-row ckeditor">
+                        <label for="origin">Xuất xứ</label>
+                        <div>
+                            <textarea name="origin" cols="40" id="origin" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-success" id="form-title"></button>
+        </form>
+    </div>
+    <script th:inline="javascript">
+        const pathname = window.location.pathname;
+        const pathArr = pathname.split("/");
+        const petId = pathArr[3];
+        let details = null;
+
+        function validateDetails() {
+            $("#submit-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+
+                rules: {
+                    "dadType": {
+                        required: true,
+                        noSpace: true
+                    },
+                    "age": {
+                        required: true,
+                        number:true
+                    },
+                    "momType": {
+                        required: true
+                    },
+                    "purebled": {
+                        required: true
+                    },
+                    "vaccination": {
+                        required: true
+                    },
+                    "origin": {
+                        required: true
+                    }
+                },
+                messages: {
+                    "dadType": {
+                        required: "Vui lòng nhập bố thú cưng"
+                    },
+                    "momType": {
+                        required: "Vui lòng nhập mẹ thú cưng"
+                    },
+                    "purebled": {
+                        required: "Vui lòng chọn mức độ thuần chủng"
+                    },
+                    "vaccination": {
+                        required: "Vui lòng nhập lịch sử tiêm phòng thú cưng"
+                    },
+                    "origin": {
+                        required: "Vui lòng nhập xuất xứ thú cưng"
+                    },
+                    "age": {
+                        required: "Vui lòng nhập tuổi(tháng) thú cưng",
+                        number:"Tuổi thú cưng là số"
+                    },
+                },
+                errorPlacement: function (error, element) {
+                    if (element.is(":radio")) {
+                        error.appendTo(element.parent(".error-gender"));
+                    } else {
+                        error.insertAfter(element);
+                    }
+                }
+            })
+        }
+
+        $("input").on('blur focusout', function () {
+            if ($("#submit-form").valid()) {
+                $('#form-title').prop('disabled', false);
+            } else {
+                $('#form-title').prop('disabled', 'disabled');
+            }
+        })
+
+        $(document).ready(function () {
+            getPetDetails(petId);
+            validateDetails();
+        })
+
+        function getPetDetails(petId) {
+            $.get({
+                url: `${baseUrl}/api/v1/pets/${petId}/details`,
+                dataType: 'json',
+                contentType: 'application/json'
+            })
+                .done(xhr => {
+                    details = xhr;
+                    $("#age").val(xhr.age),
+                        $("#dad-type").val(xhr.dadType),
+                        $("#mom-type").val(xhr.momType),
+                        $("#purebled").val(xhr.purebred),
+                        $("#vaccination").val(xhr.vaccination),
+                        $("#origin").val(xhr.origin),
+                        $("#form-title").append("Cập nhật")
+                })
+                .fail(xhr => {
+                    $("#alert").append(`
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                    $("#form-title").append("Thêm");
+                })
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            if($("$submit-form").valid()){
+                petDetails = {
+                    age: $("#age").val(),
+                    dadType: $("#dad-type").val(),
+                    momType: $("#mom-type").val(),
+                    purebred: $("#purebled").val(),
+                    vaccination: $("#vaccination").val(),
+                    origin: $("#origin").val(),
+                }
+                if (details != null) {
+                    handleSubmit(petDetails, "Cập nhật thông tin thú cưng thành công!");
+                    return;
+                }
+                handleSubmit(petDetails, "Thêm thông tin thú cưng thành công!");
+            }
+
+        }
+
+        function handleSubmit(data, successMessage) {
+            $.ajax({
+                url: `${baseUrl}/api/v1/pets/${petId}/details`,
+                type: "POST",
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json',
+            }).done(function (xhr) {
+                console.log(xhr);
+                details = xhr;
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+    </script>
+</th:block>
+
+</html>

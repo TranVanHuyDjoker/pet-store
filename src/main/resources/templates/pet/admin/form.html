@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <a href="/admin/pets" class="link">&lt; THÚ CƯNG</a>
+        <div class="mt-2" id="pet-alert"></div>
+        <div id="update-area">
+
+        </div>
+        <div class="row mb-3">
+            <div class="col-5">
+                <form class="mt-1 mb-1" id="submit-form" onsubmit="submitForm(event)">
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="name">Tên thú cưng</label>
+                            <input type="text" name="petName" class="form-control" id="name"
+                                   placeholder="Nhập tên thú cưng">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="price">Giá</label>
+                            <input type="text" name="price" class="form-control" id="price" placeholder="Nhập giá">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="sale-price">Giảm giá</label>
+                            <input type="text" name="sale-price" class="form-control" id="sale-price"
+                                   placeholder="Nhập giảm giá">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="inputCategory">Danh mục</label>
+                            <select name="inputCategory" id="inputCategory" class="form-control">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="custom-control custom-radio error-gender">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="male" value="MALE" name="gender" class="custom-control-input">
+                                <label class="custom-control-label" for="male">Đực</label>
+                            </div>
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="famale" value="FEMALE" name="gender"
+                                       class="custom-control-input">
+                                <label class="custom-control-label" for="famale">Cái</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
+                            <label for="inputColor">Màu sắc</label>
+                            <select name="color" id="inputColor" class="form-control" required="">
+                                <option disabled="disabled">Chọn màu</option>
+                                <option value="BLACK">Đen</option>
+                                <option value="YELLOW">Vàng</option>
+                                <option value="WHITE">Trắng</option>
+                                <option value="BROWN">Nâu</option>
+                                <option value="RED">Đỏ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" disabled class="btn btn-success" id="form-title"></button>
+                </form>
+            </div>
+            <div class="col-7">
+                <div class="form-row ckeditor">
+                    <label for="description">Mô tả</label>
+                    <div>
+                        <textarea id="description" class="form-control"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="photo-area">
+            <h3>Hình ảnh thú cưng</h3>
+            <div class="mt-2" id="photo-alert"></div>
+            <div class="row mb-5">
+                <div class="col-8">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Hình ảnh</th>
+                            <th>Ảnh chính</th>
+                            <th>Thực thi</th>
+                        </tr>
+                        </thead>
+                        <tbody id="pet-photos-table">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-4">
+                    <form id="photo-form">
+                        <div class="form-group">
+                            <label for="files">Chọn ảnh</label>
+                            <input type="file" onchange="addPhotos(event)" class="form-control-file" id="files"
+                                   multiple="multiple">
+                        </div>
+                        <div id="photo-error" class="error"></div>
+                        <button type="submit" id="photo-button" disabled class="btn btn-success mt-2 mb-1">Thêm ảnh
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script th:inline="javascript">
+
+        function validatePet() {
+            $("#submit-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+
+                rules: {
+                    "petName": {
+                        required: true,
+                        noSpace: true
+                    },
+                    "price": {
+                        required: true,
+                        noSpace: true,
+                        min: 0,
+                        max: 5000
+                    },
+                    "sale-price": {
+                        required: true,
+                        noSpace: true,
+                        min: 0,
+                        max: function (element) {
+                            return parseInt($('[name="price"]').val()) - 1;
+                        }
+                    },
+                    "gender": {
+                        required: true
+                    },
+                    "color": {
+                        required: true
+                    },
+                    "inputCategory": {
+                        required: true
+                    }
+                },
+                messages: {
+                    "petName": {
+                        required: "Vui lòng nhập tên thú cưng",
+                        noSpace: "Vui lòng nhập tên thú cưng"
+                    },
+                    "price": {
+                        required: "Vui lòng nhập giá thú cưng",
+                        noSpace: "Vui lòng nhập giá thú cưng",
+                        min: "Giá của thú cưng phải lớn hơn 0$",
+                        max: "Giá của thú cưng phải nhỏ hơn 5000$"
+                    },
+                    "sale-price": {
+                        required: "Vui lòng nhập giá giảm của thú cưng",
+                        noSpace: "Vui lòng nhập giá giảm của thú cưng",
+                        min: "Giảm giá của thú cưng phải lớn hơn 0$",
+                        max: "Giảm giá của thú cưng phải nhỏ hơn giá gốc"
+                    },
+                    "gender": {
+                        required: "Vui lòng chọn giới tính thú cưng"
+                    },
+                    "color": {
+                        required: "Vui lòng chọn màu của thú cưng"
+                    },
+                    "inputCategory": {
+                        required: "Vui lòng phân loại thú cưng"
+                    }
+                },
+                errorPlacement: function (error, element) {
+                    if (element.is(":radio")) {
+                        error.appendTo(element.parent(".error-gender"));
+                    } else {
+                        error.insertAfter(element);
+                    }
+                }
+            })
+        }
+
+        let uploadFiles = [];
+        let idParam = getUrlParams("id");
+
+        function categoriesDropDown(categories) {
+            let newCategories = categories.filter(cate => cate.parentId != 0);
+            newCategories.map((category, index) => {
+                $("#inputCategory").append(`
+                 <option value="${category.id}">${category.name}</option>
+                `)
+            })
+        }
+
+        $("input").on('blur focusout', function () {
+            if ($("#submit-form").valid()) {
+                $('#form-title').prop('disabled', false);
+            } else {
+                $('#form-title').prop('disabled', 'disabled');
+            }
+        })
+
+        function getPetById() {
+            $.get(`${baseUrl}/api/v1/pets/${idParam}`)
+                .done(function (xhr) {
+                    handlePet(xhr);
+                })
+                .fail(function (xhr) {
+                    $("#pet-alert").empty();
+                    $("#pet-alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                });
+        }
+
+        function handlePet(pet) {
+            $("#name").val(pet.name)
+            $("#price").val(pet.price)
+            $("#sale-price").val(pet.salePrice)
+            $("#inputCategory").val(pet.category.id)
+            $("input[name='gender'][value=" + pet.gender + "]").attr("checked", true);
+            $("#inputColor").val(pet.colorType)
+            $("#description").val(pet.description)
+        }
+
+        function getCategories() {
+            $.get(`${baseUrl}/api/v1/categories`)
+                .done(function (xhr) {
+                    categoriesDropDown(xhr);
+                })
+                .fail(function (xhr) {
+                    $("#pet-alert").empty();
+                    $("#pet-alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                });
+        }
+
+        $(document).ready(function () {
+            $("#update-area").hide();
+            getCategories();
+            validatePet();
+            $("#photo-area").hide();
+            $("#description").ckeditor();
+            if (idParam) {
+                getPetById();
+                $("#update-area").show();
+                $("#update-area").append(`
+                   <a href="/admin/pets/${idParam}/details" class="btn btn-info">Chi tiết</a>
+                   <button onClick="deletePet(${idParam})" type="button" class="btn btn-danger">Xóa</button>
+                `);
+                $("#form-title").append("Cập nhật")
+                $("#photo-area").show();
+                $('#form-title').prop('disabled', false);
+                getPhotos();
+                return;
+            }
+            $("#form-title").append("Thêm mới");
+            $("#title").append("Thêm mới");
+        });
+
+        function deletePet(id) {
+            if (confirm("Bạn chắc chắn muốn xóa thú cưng này chứ?")) {
+                $.ajax({
+                    url: `${baseUrl}/api/v1/pets/${id}`,
+                    type: "DELETE",
+                    dataType: 'json',
+                    contentType: 'application/json'
+                }).done(function (xhr) {
+                    window.location.href = "/admin/pets";
+                }).fail(function (xhr) {
+                    console.log(xhr)
+                })
+
+            }
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            if (!$("#submit-form").valid()) {
+                return;
+            }
+            pet = {
+                name: $("#name").val(),
+                price: $("#price").val(),
+                salePrice: $("#sale-price").val(),
+                categoryId: $("#inputCategory").val(),
+                gender: $("input[name='gender']:checked").val(),
+                color: $("#inputColor").val(),
+                description: $("#description").val()
+            }
+            if (idParam) {
+                handleSubmit(pet, 'PUT', `${baseUrl}/api/v1/pets/${idParam}`, "Cập nhật thú cưng thành công!");
+                return;
+            }
+            handleSubmit(pet, 'POST', `${baseUrl}/api/v1/pets`, "Thêm thú cưng thành công!");
+        }
+
+        function handleSubmit(data, type, url, successMessage) {
+            $.ajax({
+                url: url,
+                type: type,
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json',
+            }).done(function (xhr) {
+                $("#pet-alert").empty();
+                $("#pet-alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                $("#pet-alert").empty();
+                $("#pet-alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+        $("#photo-form").submit((event) => {
+            event.preventDefault();
+            var formData = new FormData();
+            for (let i = 0; i < uploadFiles.length; i++) {
+                formData.append("files", uploadFiles[i]);
+            }
+            handleSubmitPhoto(formData, `${baseUrl}/api/v1/pets/${idParam}/photos`, "Thêm ảnh thú cưng thành công!")
+            uploadFiles = [];
+        })
+
+        function addPhotos(event) {
+            let data = new FormData();
+            let {files} = event.target;
+            if (checkFiles) {
+                uploadFiles = files
+                $('#photo-button').prop('disabled', false);
+            }
+            ;
+
+        }
+
+        function checkFiles(files) {
+            if (files.length == 0) return;
+            files.forEach(file => {
+                if (file.size >= 2097152) {
+                    $("#photo-error").text("Kích thước ảnh quá lớn. Vui lòng chọn ảnh khác");
+                    return false;
+                }
+                ;
+                if (!file.name.endsWith(jpg) || !file.name.endsWith(jepg)) {
+                    $("#photo-error").text("Định dạng ảnh không được cho phép");
+                    return false;
+                }
+            })
+        }
+
+
+        function getPhotos() {
+            $.get({
+                url: `${baseUrl}/api/v1/pets/${idParam}/photos`,
+                contentType: "application/json",
+                dataType: 'json'
+            })
+                .done(xhr => {
+                    renderPhotos(xhr);
+                })
+        }
+
+        function renderPhotos(photos) {
+            if (photos.length > 0) {
+                photos.map((photo, index) => {
+                    $('#pet-photos-table')
+                        .append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><img src="${baseUrl}/${photo.photoPath}" alt="${photo.id}" style="width: 80px; height: 80px;"/>  </td>
+                        <td> <input id="check-${photo.id}" class="form-check-input" onchange="activePhoto(event,${photo.id})" type="checkbox" /></td>
+                        <td><button type="button" onClick="deletePhoto(${photo.id})" class="btn btn-danger">Xóa ảnh</button>\</td>
+                    </tr>
+                    `)
+
+                })
+            }
+            onCheck(photos);
+        }
+
+        function onCheck(photos) {
+            photos.forEach(photo => {
+                if (photo.primaryPhoto === true) {
+                    $("#check-" + photo.id).attr("checked", "1");
+                }
+            })
+        }
+
+        function activePhoto(event, photoId) {
+            let {checked} = event.target;
+            if (checked === true) {
+                $.ajax({
+                    url: `${baseUrl}/api/v1/pets/${idParam}/photos/${photoId}`,
+                    type: "PUT",
+                    dataType: 'json',
+                    contentType: 'application/json'
+                }).done(function (xhr) {
+                    $("#alert").empty();
+                    $('#pet-photos-table').empty();
+                    $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Cập nhật ảnh chính thành công
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                    getPhotos();
+                }).fail(function (xhr) {
+                    $("#alert").empty();
+                    $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                })
+            }
+        }
+
+        function handleSubmitPhoto(data, url, successMessage) {
+            $.post({
+                url: url,
+                data: data,
+                processData: false,
+                contentType: false,
+                cache: false
+            }).done(function (xhr) {
+                $("#photo-alert").empty();
+                $('#pet-photos-table').empty();
+                $("#photo-alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                getPhotos();
+            }).fail(function (xhr) {
+                $("#photo-alert").empty();
+                $("#photo-alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+        function deletePhoto(id) {
+            if (confirm("Bạn chắc chắn muốn xóa ảnh này chứ?")) {
+                $.ajax({
+                    url: `${baseUrl}/api/v1/pets/${idParam}/photos/${id}`,
+                    type: 'DELETE',
+                    dataType: 'json',
+                    contentType: 'application/json'
+                })
+                    .done(xhr => {
+                        $("#photo-alert").empty();
+                        $("#pet-photos-table").empty();
+                        $("#photo-alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           Xóa ảnh thành công
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+
+                        getPhotos();
+                    })
+                ;
+            }
+        }
+    </script>
+</th:block>
+
+</html>

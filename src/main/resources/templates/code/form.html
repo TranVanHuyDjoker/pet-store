@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extrasd/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <a href="/admin/promotion-codes">&lt;Mã giảm giá</a>
+        <div class="mt-2" id="alert"></div>
+        <form class="mt-1 mb-1" id="submit-form" onsubmit="submitForm(event)">
+            <div class="code-apply-type">
+               <div>
+                   <label>Áp dụng</label>
+               </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="codeApplyType" id="applyType1" value="DELIVERY">
+                    <label class="form-check-label" for="applyType1">Vận chuyển</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="codeApplyType" id="applyType2" value="PET">
+                    <label class="form-check-label" for="applyType2">Thú cưng</label>
+                </div>
+            </div>
+            <div class="code-type">
+                <div>
+                    <label>Kiểu giảm giá</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="codeType1" type="radio" name="codeType" value="NORMAL">
+                    <label class="form-check-label" for="codeType1">Thông thường</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="codeType2" type="radio" name="codeType" value="PERCENT">
+                    <label class="form-check-label" for="codeType2">Phần trăm</label>
+                </div>
+            </div>
+            <div id="code-error"></div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="saleAmount">Số tiền giảm</label>
+                    <input type="number" readonly name="saleAmount" class="form-control" id="saleAmount"
+                           placeholder="Nhập số tiền giảm">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="quantity">Số lượng</label>
+                    <input type="number" name="quantity" class="form-control" id="quantity"
+                           placeholder="Nhập số lượng mã giảm giá">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="startDate">Ngày bắt đầu</label>
+                    <input type="datetime-local" name="startDate" class="datePicker form-control" id="startDate"
+                           placeholder="Chọn ngày áp dụng mã giảm giá">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="expireDate">Ngày kết thúc</label>
+                    <input type="datetime-local" name="expireDate" class="datePicker form-control" id="expireDate"
+                           placeholder="Chọn ngày hết hạn mã giảm giá">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success" disabled id="form-title"></button>
+        </form>
+    </div>
+
+    <script th:inline="javascript">
+        let idParam = getUrlParams("id");
+        let codeType = "";
+        let codeApplyType = "";
+
+        $("input[type=radio][name=codeType]").change(function () {
+            codeType = this.value;
+            $("#saleAmount").prop("readonly", false);
+        })
+        $("input[type=radio][name=codeApplyType]").change(function () {
+            codeApplyType = this.value;
+        })
+
+        $("input").on('blur focusout', function () {
+            if ($("#submit-form").valid()) {
+                $('#form-title').prop('disabled', false);
+            } else {
+                $('#form-title').prop('disabled', 'disabled');
+            }
+        })
+
+        function validateCode() {
+            $("#submit-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+
+                rules: {
+                    "codeType": {
+                        required: true,
+                        noSpace: true
+                    },
+                    "saleAmount": {
+                        required: true,
+                        noSpace: true,
+                        min: 0.2,
+                        max: function (element) {
+                            if (codeType == "NORMAL" && codeApplyType == "PET") return 4000;
+                            if ((codeType == "PERCENT")) return 100;
+                            if (codeType == "NORMAL" && codeApplyType == "DELIVERY") return 1.5;
+                        }
+                    },
+                    "quantity": {
+                        required: true,
+                        noSpace: true,
+                        min: 1,
+                        max: 100
+                    },
+                    "codeApplyType": {
+                        required: true
+                    },
+                    "startDate": {
+                        required: true
+                    },
+                    "expireDate": {
+                        required: true
+                    }
+                },
+                messages: {
+                    "codeType": {
+                        required: "Vui lòng chọn mã sẽ giảm theo cách nào",
+                        noSpace: "Vui lòng chọn mã sẽ giảm theo cách nào"
+                    },
+                    "saleAmount": {
+                        required: "Vui lòng nhập số tiền giảm",
+                        noSpace: "Vui lòng nhập số tiền giảm",
+                        min: "Số tiền giảm phải lớn hơn 0$",
+                        max: function (element) {
+                            if (codeType == "NORMAL" && codeApplyType == "PET") return "Giảm giá phải nhỏ hơn 4000$";
+                            if ((codeType == "PERCENT")) return "Giảm giá phải nhỏ hơn 100%";
+                            if (codeType == "NORMAL" && codeApplyType == "DELIVERY") return "Giảm giá  vận chuyển phải nhỏ hơn 1.5$";
+                        }
+                    },
+                    "quantity": {
+                        required: "Vui lòng nhập số lượng",
+                        noSpace: "Vui lòng nhập số lượng",
+                        min: "Số lượng phải lớn hơn 1",
+                        max: "Số lượng phải lớn hơn 100"
+                    },
+                    "codeApplyType": {
+                        required: "Vui lòng chọn loại mã giảm giá sẽ áp dụng"
+                    },
+                    "startDate": {
+                        required: "Vui lòng chọn ngày áp dụng"
+                    },
+                    "expireDate": {
+                        required: "Vui lòng chọn ngày hết hạn"
+                    }
+                },
+                errorPlacement: function (error, element) {
+                    console.log(element.name)
+                    if (element.is(":radio")) {
+                        error.appendTo('.code-error');
+                    } else {
+                        error.insertAfter(element);
+                    }
+                }
+            })
+        }
+
+        $(document).ready(function () {
+            validateCode();
+            if (idParam) {
+                getCodeById();
+                $("#form-title").append("Cập nhật");
+                return;
+            }
+            $("#form-title").append("Thêm");
+        })
+
+        function submitForm(event) {
+            event.preventDefault();
+            if(!$("#submit-form").valid()){
+                return;
+            }
+            let code = {
+                codeType: codeType,
+                codeApplyType: codeApplyType,
+                createAt: formatDate($("#startDate").val()),
+                expiredAt: formatDate($("#expireDate").val()),
+                saleAmount: $("#saleAmount").val(),
+                quantity: $("#quantity").val()
+            }
+            console.log(code);
+            if (idParam) {
+                handleSubmit(code, 'PUT', `${baseUrl}/api/v1/promotion-codes/${idParam}`, "Cập nhật mã giảm giá thành công!");
+                return;
+            }
+            handleSubmit(code, 'POST', `${baseUrl}/api/v1/promotion-codes`, "Thêm mã giảm giá thành công!");
+        }
+
+        function handleSubmit(data, type, url, successMessage) {
+            $.ajax({
+                url: url,
+                type: type,
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json',
+            }).done(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+        function getCodeById() {
+            $.get(`${baseUrl}/api/v1/promotion-codes/${idParam}`)
+                .done(function (xhr) {
+                    renderCodeById(xhr);
+                })
+                .fail(function (xhr) {
+                    $("#alert").empty();
+                    $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                });
+        }
+
+        function renderCodeById(code) {
+            $("input[name='codeType'][value=" + code.codeType + "]").attr("checked", true);
+            $("input[name='codeApplyType'][value=" + code.codeApplyType + "]").attr("checked", true);
+            $("#saleAmount").val(code.saleAmount);
+            $("#startDate").val(formatDate(code.createAt));
+            $("#expireDate").val(formatDate(code.expiredAt));
+            $("#quantity").val(code.quantity);
+        }
+
+        function formatDate(date) {
+            let dateTime = new Date(date);
+            return dateTime.toLocaleString("en-GB");
+        }
+    </script>
+</th:block>
+</html>

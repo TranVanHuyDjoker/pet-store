@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+<div class="container">
+    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+    <div id="bar_chart" style="width: 900px; height: 500px"></div>
+    <div id="pie_chart" style="width: 900px; height: 500px"></div>
+    <div>
+        <form th:action="@{/admin/export/pdf}" method="get">
+            <button type="submit" class="btn-primary">Export PDF</button>
+        </form>
+    </div>
+    <div id="week_chart" style="width: 900px; height: 500px"></div>
+</div>
+    <script th:inline="javascript">
+           $(document).ready(function (){
+               getByMonth();
+               getByYear();
+               getByQuater();
+               getByWeek();
+
+           });
+            function getByMonth(){
+                $.ajax({
+                    type: 'GET',
+                    headers: {
+                        Accept: "application/json; charset=utf-8",
+                        "Content-Type":"application/json; charset=utf-8"
+                    },
+                    url:`${baseUrl}/api/v1/order/report/month`,
+                    success: function (result){
+                        google.charts.load('current',{
+                            'packages': ["corechart"]
+                        });
+                        google.charts.setOnLoadCallback(function () {
+                            drawChartLineChart(result);
+                        });
+                    }
+                });
+            }
+           function getByYear(){
+               $.ajax({
+                   type: 'GET',
+                   headers: {
+                       Accept: "application/json; charset=utf-8",
+                       "Content-Type":"application/json; charset=utf-8"
+                   },
+                   url:`${baseUrl}/api/v1/order/report/year`,
+                   success: function (result){
+                       google.charts.load('current',{
+                           'packages': ['corechart']
+                       });
+                       google.charts.setOnLoadCallback(function () {
+                           drawChartBarChart(result);
+                       });
+                   }
+               });
+           }
+           function getByQuater(){
+               $.ajax({
+                   type: 'GET',
+                   headers: {
+                       Accept: "application/json; charset=utf-8",
+                       "Content-Type":"application/json; charset=utf-8"
+                   },
+                   url:`${baseUrl}/api/v1/order/report/quarter`,
+                   success: function (result){
+                       google.charts.load('current',{
+                           'packages': ['corechart']
+                       });
+                       google.charts.setOnLoadCallback(function () {
+                           drawPieChart(result);
+                           console.log(result)
+                       });
+                   }
+               });
+           }
+           function getByWeek(){
+               $.ajax({
+                   type: 'GET',
+                   headers: {
+                       Accept: "application/json; charset=utf-8",
+                       "Content-Type":"application/json; charset=utf-8"
+                   },
+                   url:`${baseUrl}/api/v1/order/report/week`,
+                   success: function (result){
+                       google.charts.load('current',{
+                           'packages': ['corechart']
+                       });
+                       google.charts.setOnLoadCallback(function () {
+                           drawChartForWeek(result);
+                           console.log(result)
+                       });
+                   }
+               });
+           }
+           function drawChartLineChart(result) {
+               let data = new google.visualization.DataTable();
+               data.addColumn('number', 'Month');
+               data.addColumn('number', 'Quantity');
+
+               let dataArray = [];
+               result.forEach((obj,index)=>{
+                   dataArray.push([obj.month,obj.quantity]);
+               })
+               data.addRows(dataArray);
+               let options = {
+                   title: 'Report Order For Month In Year',
+                   legend: 'none',
+                   vAxes: {
+                       // Adds titles to each axis.
+                       0: {title: 'Quantity'}
+                   },
+                   hAxis: {
+                       title: 'Month'
+                   },
+                   focusTarget: 'category',
+                   animation: {
+                       startup: true,
+                       duration: 1000,
+                       easing: 'in'
+                   }
+               };
+
+               let columnChart = new google.visualization.ColumnChart(document
+                   .getElementById('curve_chart'));
+               columnChart.draw(data, options);
+
+           }
+           function drawChartBarChart(result) {
+               let data = new google.visualization.DataTable();
+               data.addColumn('number', 'Year');
+               data.addColumn('number', 'Quantity');
+
+               let dataArray = [];
+               result.forEach((obj,index)=>{
+                   dataArray.push([obj.year,obj.quantity]);
+               })
+               data.addRows(dataArray);
+               let options = {
+                   title: 'Report Order For Year',
+                   curveType: 'function',
+                   legend: { position: 'bottom' },
+                   vAxes: {
+                       // Adds titles to each axis.
+                       0: {title: 'Year'}
+                   },
+                   hAxis: {
+                       title: 'Quantity'
+                   },
+                   animation: {
+                       startup: true,
+                       duration: 1500,
+                       easing: 'out',
+                   }
+               };
+
+               let columnChart = new google.visualization.BarChart(document
+                   .getElementById('bar_chart'));
+               columnChart.draw(data, options);
+
+           }
+           function drawPieChart(result) {
+               let data = new google.visualization.DataTable();
+               data.addColumn('number', 'Quarter');
+               data.addColumn('number', 'Quantity');
+
+               let dataArray = [];
+               result.forEach((obj,index)=>{
+                   dataArray.push([obj.quarter,obj.quantity]);
+               })
+               data.addRows(dataArray);
+               let options = {
+                   title: 'Report Order For Quarter In Week',
+                   legend: 'none',
+                   vAxes: {
+                       0: {title: 'Quantity'}
+                   },
+                   hAxis: {
+                       minValue: 0,
+                       title: 'Quarter'
+                   },
+                   focusTarget: 'category',
+                   animation: {
+                       startup: true,
+                       duration: 1000,
+                       easing: 'linear',
+                   }
+               };
+
+               let columnChart = new google.visualization.AreaChart(document
+                   .getElementById('pie_chart'));
+               columnChart.draw(data, options);
+
+           }
+           function drawChartForWeek(result) {
+               let data = new google.visualization.DataTable();
+               data.addColumn('number', 'Date');
+               data.addColumn('number', 'Quantity');
+
+               let dataArray = [];
+               result.forEach((obj,index)=>{
+                   dataArray.push([obj.date,obj.quantity]);
+               })
+               data.addRows(dataArray);
+               let options = {
+                   title: 'Report Order For Month In Week',
+                   legend: 'none',
+                   vAxes: {
+                       // Adds titles to each axis.
+                       0: {title: 'Quantity'}
+                   },
+                   hAxis: {
+                       title: 'Day of week'
+                   },
+                   focusTarget: 'category',
+                   animation: {
+                       startup: true,
+                       duration: 1000,
+                       easing: 'linear',
+                   }
+               };
+
+               let columnChart = new google.visualization.ColumnChart(document
+                   .getElementById('week_chart'));
+               columnChart.draw(data, options);
+
+           }
+    </script>
+
+</th:block>
+</html>

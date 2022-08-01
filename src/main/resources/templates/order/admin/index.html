@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <h2>ĐƠN HÀNG</h2>
+        <div id="alert" class="alert"></div>
+        <table class="table table-hover">
+            <div class="d-flex flex-row-reverse">
+                <div>
+                    <form id="search-form" onsubmit="searchOrder(event)">
+                        <div class="d-flex flex-row">
+                            <div class="col-8">
+                                <input class="form-control mr-sm-2" id="search-txt" type="search"
+                                       placeholder="Nhập mã đơn hàng" aria-label="Search">
+                            </div>
+                            <div clas="col-2">
+                                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <thead>
+            <tr>
+                <th>#</i></th>
+                <th class="link" onclick="onChangeSortBy('id')">Mã đơn hàng</th>
+                <th class="link" onclick="onChangeSortBy('paymentMethod')">Phương thức</th>
+                <th>Tổng thành tiền</th>
+                <th class="link" onclick="onChangeSortBy('status')">Tình trạng</th>
+                <th class="link" onclick="onChangeSortBy('createAt')">Ngày tạo</th>
+                <th class="link" onclick="onChangeSortBy('updateAt')">Ngày cập nhật</th>
+                <th>Thực thi</th>
+            </tr>
+            </thead>
+            <tbody id="orders-table-body">
+            </tbody>
+        </table>
+        <div class="row mt-2" style="justify-content: center">
+            <div class="col-5">
+                <nav aria-label="Page navigation example">
+                    <ul id="pagination" class="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        let keyword = "";
+        let currentPage = 1;
+        let limit = 10;
+        let sortDirection = "ASC";
+        let sortBy = "id";
+        let count = 1;
+
+        let searchOrder = event => {
+            event.preventDefault();
+            currentPage = 1;
+            keyword = $("#search-txt").val();
+            $("#orders-table-body").empty();
+            getOrders();
+        }
+
+        function onChangeSortBy(value) {
+            if (sortBy != value && count <= 2) {
+                sortBy = value;
+                count = 0;
+                if (count % 2 == 0) {
+                    sortDirection = true;
+                }else{
+                    sortDirection = false;
+                }
+                count++;
+                getOrders();
+                return;
+            }
+            if (sortBy == value && count < 2) {
+                if (count % 2 == 0) {
+                    sortDirection = true;
+                }else{
+                    sortDirection = false;
+                }
+                count++;
+                getOrders();
+                return;
+            }
+            if (count == 2) {
+                sortBy = "id";
+                count = 0;
+                sortDirection = true;
+                getOrders();
+                return;
+            }
+        }
+
+        function renderOrders(orders) {
+            $("#orders-table-body").empty();
+            orders.map((order, index) => {
+                $("#orders-table-body").append(`<tr>`)
+                    .append(`<td>${index + 1}</td>`)
+                    .append(`<td>${order.id}</td>`)
+                    .append(`<td>${order.paymentMethod}</td>`)
+                    .append(`<td>${order.totalPrice}$</td>`)
+                    .append(`<td><div class="form-group">
+                            <select onchange="updateOrderStatus('${order.id}',event)" id="inputStatus-${order.id}" class="form-control">
+                                <option value="VERIFY"> Đợi xác nhận</option>
+                                <option value="SHIPPING">Vận chuyển</option>
+                                <option value="DONE">Hoàn thành</option>
+                                <option value="CANCEL">Huỷ</option>
+                            </select>
+                            </div></td>`)
+                    .append(`<td>${order.createAt}</td>`)
+                    .append(`<td>${order.updateAt}</td>`)
+                    .append(`<td>
+                                <a href="/admin/orders/${order.id}" class="btn btn-info">Chi tiết</a> &nbsp;&nbsp;
+                            </td>`)
+                    .append("</tr>")
+                handleSelected(order.status, order.id);
+            })
+        }
+
+        $(document).ready(function () {
+            getOrders();
+
+        })
+
+        function getOrders() {
+            $.get({
+                url: `${baseUrl}/api/v1/orders?keyword=${keyword}&currentPage=${currentPage}&limit=${limit}&sortDirection=${sortDirection ? 'ASC' : 'DESC'}&sortBy=${sortBy}`,
+                contentType: "application/json",
+                dataType: "json"
+            })
+                .done(xhr => {
+                    renderOrders(xhr.listDTO);
+                    renderPages(xhr.totalPages);
+                })
+        }
+
+        function handleSelected(value, id) {
+            $("#inputStatus-" + id).val(value);
+        }
+
+        function renderPages(totalPages){
+            $('#pagination').pagination({
+                total: limit * totalPages,
+                current: currentPage,
+                length: limit,
+                size: 1,
+                prev: "Truớc",
+                next: "Sau",
+                click: function(options, refresh) {
+                    currentPage = options.current;
+                    $.ajax({
+                        url: `${baseUrl}/api/v1/orders?keyword=${keyword}&currentPage=${options.current}&limit=${limit}&sortDir=${sortDirection ? "ASC" : "DESC"}&sortBy=${sortBy}`,
+                        type:"GET",
+                    }).done(function(res){
+                        $("#orders-table-body").empty();
+                        renderOrders(res.listDTO);
+                    }).fail(function(error){
+                        console.log(error)
+                    });
+                }
+            });
+        }
+
+        function updateOrderStatus(id, event) {
+            let {value} = event.target;
+            $.ajax({
+                url: `${baseUrl}/api/v1/orders/${id}?orderStatus=${value}`,
+                type: "PUT",
+                dataType: 'json',
+                contentType: 'application/json'
+            }).done(function (xhr) {
+                $("#alert").empty();
+                $('#pet-photos-table').empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Cập nhật đơn hàng thành công
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+
+        }
+    </script>
+</th:block>
+</html>

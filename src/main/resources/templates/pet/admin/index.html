@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+
+    <div class="container">
+        <h2>THÚ CƯNG</h2>
+        <a th:href="@{/admin/pets/add}" class="btn btn-success mt-2 mb-1">Thêm thú cưng</a>
+        <a th:href="@{/admin/pets/export/pdf}" class="btn btn-success mt-2 mb-1">Xuất file PDF</a>
+        <a th:href="@{/admin/pets/export/excel}" class="btn btn-success mt-2 mb-1">Xuất file Excel</a>
+
+        <table class="table table-hover">
+            <div class="d-flex flex-row-reverse">
+                <div>
+                    <form id="search-form" onsubmit="searchPet(event)">
+                        <div class="d-flex flex-row">
+                            <div class="col-8">
+                                <input class="form-control mr-sm-2" id="search-txt" type="search"
+                                       placeholder="Tìm kiếm thú cưng" aria-label="Search">
+                            </div>
+                            <div clas="col-2">
+                                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <thead>
+            <tr>
+                <th>#</i></th>
+                <th onclick="onChangeSortBy('name')" class="link">Tên</th>
+                <th>Danh mục</th>
+                <th>Màu sắc</th>
+                <th>Giới tính</th>
+                <th onclick="onChangeSortBy('price')" class="link">Giá</th>
+                <th>Giảm giá</th>
+                <th onclick="onChangeSortBy('createAt')" class="link">Ngày thêm</th>
+                <th onclick="onChangeSortBy('updateAt')" class="link">Ngày cập nhật</th>
+            </tr>
+            </thead>
+            <tbody id="pets-table-body">
+            </tbody>
+        </table>
+        <div class="row mt-2" style="justify-content: center">
+            <div class="col-5">
+                <nav aria-label="Page navigation example">
+                    <ul id="pagination" class="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        let keyword = "";
+        let currentPage = 1;
+        let limit = 10;
+        let sortDirection = true;
+        let sortBy = "id";
+        let count = 0;
+        $(document).ready(function () {
+            getPets();
+        })
+
+        function onChangeSortBy(value) {
+            if (sortBy != value && count <= 2) {
+                sortBy = value;
+                count = 0;
+                if (count % 2 == 0) {
+                    sortDirection = true;
+                }else{
+                    sortDirection = false;
+                }
+                count++;
+                getPets();
+                return;
+            }
+            if (sortBy == value && count < 2) {
+                if (count % 2 == 0) {
+                    sortDirection = true;
+                }else{
+                    sortDirection = false;
+                }
+                count++;
+                getPets();
+                return;
+            }
+            if (count == 2) {
+                sortBy = "id";
+                count = 0;
+                sortDirection = true;
+                getPets();
+                return;
+            }
+        }
+
+        function getPets() {
+            $.get({
+                url: `${baseUrl}/api/v1/pets?keyword=${keyword}&currentPage=${currentPage}&limit=${limit}&sortDirection=${sortDirection ? "ASC" : "DESC"}&sortBy=${sortBy}`,
+                dataType: 'json',
+                contentType: 'application/json'
+            })
+                .done(xhr => {
+                    renderPets(xhr.listDTO);
+                    renderPages(xhr.totalPages)
+                })
+        }
+
+        function renderPages(totalPages) {
+            $('#pagination').pagination({
+                total: limit * totalPages,
+                current: currentPage,
+                length: limit,
+                size: 1,
+                prev: "Truớc",
+                next: "Sau",
+                click: function (options) {
+                    currentPage = options.current;
+                    $.ajax({
+                        url: `${baseUrl}/api/v1/pets?keyword=${keyword}&currentPage=${options.current}&limit=${limit}&sortDir=${sortDirection ? "ASC" : "DESC"}&sortBy=${sortBy}`,
+                        type: "GET",
+                    }).done(function (res) {
+                        console.log(res);
+                        $("#pets-table-body").empty();
+                        renderPets(res.listDTO);
+                    }).fail(function (error) {
+                        console.log(error)
+                    });
+                }
+            });
+        }
+
+        let searchPet = event => {
+            event.preventDefault();
+            currentPage = 1;
+            keyword = $("#search-txt").val();
+            $("#pets-table-body").empty();
+            getPets();
+
+        }
+
+        function renderPets(pets) {
+            $("#pets-table-body").empty();
+            pets.forEach((pet, index) => {
+                $("#pets-table-body")
+                    .append(`<tr>`)
+                    .append(`<td>${index + 1}</td>`)
+                    .append(`<td><a class="link" href="/admin/pets/update?id=${pet.id}">${pet.name}</a></td>`)
+                    .append(`<td>${pet.category ? pet.category.name : "-"}</td>`)
+                    .append(`<td><div style="background:${pet.colorType};width:12px;height:12px"></div></td>`)
+                    .append(`<td>${pet.gender == 'MALE' ? 'Đực' : 'Cái'}</td>`)
+                    .append(`<td>${pet.price}</td>`)
+                    .append(`<td>${pet.salePrice}</td>`)
+                    .append(`<td>${pet.createAt}</td>`)
+                    .append(`<td>${pet.updateAt}</td>`)
+                    .append("</tr>")
+
+                    .append(`<tr id="pet-${pet.id}-photos">`)
+                    .append(`</tr>`)
+            });
+        };
+
+
+    </script>
+</th:block>
+
+</html>

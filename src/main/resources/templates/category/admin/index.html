@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+
+    <div class="container">
+        <h2>DANH MỤC</h2>
+        <div class="mt-2" id="alert"></div>
+        <a th:href="@{/admin/categories/add}" class="btn btn-success mt-2 mb-1">Thêm danh mục</a>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Thực thi</th>
+            </tr>
+            </thead>
+            <tbody id="cate-table-body">
+            </tbody>
+        </table>
+    </div>
+    <script th:inline="javascript">
+        $( document ).ready(function() {
+            getCategories();
+        })
+        function getCategories(){
+            $.get({
+                url: `${baseUrl}/api/v1/categories`,
+                contentType: "application/json",
+                dataType: "json"
+            })
+                .done(function(xhr){
+                    renderCategories(xhr);
+                })
+        }
+
+        function renderCategories(categories){
+            categories.forEach((cate,index) => {
+                $("#cate-table-body")
+                    .append("<tr>")
+                    .append(`<td>${index+1}</td>`)
+                    .append(`<td>${cate.name}</td>`)
+                    .append(`<td>
+                                <a type="button" href="/admin/categories/update?id=${Number(cate.id)}" class="btn btn-warning">Sửa</a> &nbsp;&nbsp;
+                                <button onClick="deleteCategory(${cate.id})" type="button" class="btn btn-danger">Xóa</button>
+                            </td>`)
+                    .append("</tr>")
+            });
+        };
+
+        function deleteCategory(id){
+            if(confirm("Bạn chắc chắn muốn xóa danh mục này chứ?")){
+                $.ajax({
+                    url:`${baseUrl}/api/v1/categories/${id}`,
+                    type: "DELETE",
+                    dataType:'json',
+                    contentType: 'application/json',
+                })
+                    .done((xhr)=>{
+                        $("#alert").empty();
+                        $("#cate-table-body").empty();
+                        $("#alert").append(`
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                Xóa danh mục thành công
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                    `)
+                        getCategories();
+                    })
+                    .fail((xhr)=>{
+                        $("#alert").empty();
+                        $("#alert").append(`
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                ${xhr.responseJSON.message}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                    `)
+                    })
+            }
+        }
+    </script>
+</th:block>
+
+</html>

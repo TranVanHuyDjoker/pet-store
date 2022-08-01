@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <div class="alert alert-success" role="alert">
+            <span th:text="${'Xác thực thành công !'}"></span> <a href="/signin" class="alert-link">Vui lòng đăng nhập để mua sản phẩm</a>
+        </div>
+    </div>
+</th:block>
+</html>

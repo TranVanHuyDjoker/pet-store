@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <a href="/admin/refunds">&lt; Đơn trả hàng</a>
+        <div class="mt-2" id="alert"></div>
+        <form class="mt-1 mb-1" id="submit-form">
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="inputOrders">Mã hoá đơn</label>
+                    <select id="inputOrders" class="form-control">
+
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-row">
+                    <label for="reason">Lý do trả hàng</label>
+                    <textarea id="reason" class="form-control"></textarea>
+                </div>
+
+            </div>
+            <button type="submit" class="btn btn-success mt-2">Gửi đơn</button>
+        </form>
+    </div>
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            getOrders();
+        });
+
+        function ordersDropdown(orders) {
+            orders.map((order, index) => {
+                $("#inputOrders").append(`
+                 <option value="${order.id}">${order.id}</option>
+                `)
+            })
+        }
+
+        function getOrders() {
+            $.get({
+                url: `${baseUrl}/api/v1/users/orders`,
+                dataType: 'json',
+                contentType: 'application/json'
+            })
+                .done(xhr => {
+                    ordersDropdown(xhr);
+                })
+        }
+
+        $("#submit-form").submit(event => {
+            event.preventDefault();
+            let refund = {
+                orderId: $("#inputOrders").val(),
+                reason: $("#reason").val()
+            }
+            handleSubmit(refund)
+        })
+
+        function handleSubmit(data) {
+            $.ajax({
+                url: `${baseUrl}/api/v1/refunds`,
+                type: 'POST',
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json',
+            }).done(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+    </script>
+</th:block>
+</html>

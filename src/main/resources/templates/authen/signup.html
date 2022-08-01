@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <div id="alert"></div>
+        <form id="register-form" method="post">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Tên tài khoản</label>
+                    <input type="text" class="form-control" id="username" name="username"
+                           placeholder="Mời nhập tên tài khoản">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="email" name="email"
+                           placeholder="Mời nhập địa chỉ Email">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Mật khẩu</label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Mời nhập mật khẩu">
+                </div>
+            </div>
+            <button type="submit" id="btn" disabled class="btn btn-primary">Đăng ký</button>
+        </form>
+        <div id="spinner" class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <div>
+            Bạn đã có tài khoản? <a href="/signin">Đăng nhập</a>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        function validateSignUp() {
+            $("#register-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+                rules: {
+                    "username": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength: 20
+                    },
+                    "email": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength: 40,
+                        email: true
+                    },
+                    "password": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength: 40
+                    },
+                },
+                messages: {
+                    "username": {
+                        required: "Vui lòng nhập tên tài khoản",
+                        noSpace: "Vui lòng nhập tên tài khoản",
+                        minlength: "Tên tài khoản phải có ít nhất 10 ký tự",
+                        maxlength: "Tên tài khoản chỉ có nhiều nhất nhất 20 ký tự",
+                    },
+                    "email": {
+                        required: "Vui lòng nhập địa chỉ Email ",
+                        noSpace: "Vui lòng nhập địa chỉ Email ",
+                        minlength: "Địa chỉ Email phải có ít nhất 10 ký tự",
+                        maxlength: "Địa chỉ Email chỉ có nhiều nhất nhất 40 ký tự",
+                        email: "Sai định dạng địa chỉ Email"
+                    },
+                    "password": {
+                        required: "Vui lòng nhập mật khẩu",
+                        noSpace: "Vui lòng nhập mật khẩu",
+                        minlength: "Mật khẩu phải có ít nhất 10 ký tự",
+                        maxlength: "Mật khẩu phải chỉ có nhiều nhất nhất 40 ký tự"
+                    },
+                }
+            })
+        }
+        $("input").on('blur focusout', function () {
+            if ($("#register-form").valid()) {
+                $('#btn').prop('disabled', false);
+            } else {
+                $('#btn').prop('disabled', 'disabled');
+            }
+        })
+        $(document).ready(function () {
+            validateSignUp();
+        })
+        $("#spinner").hide();
+        $("#register-form").submit(function (e) {
+            e.preventDefault();
+            if (!$("#register-form").valid()) {
+                return;
+            }
+            let username = $("#username").val();
+            let email = $("#email").val();
+            let password = $("#password").val();
+
+            let user = {
+                username,
+                email,
+                password
+            };
+            handleRegister(user, `${baseUrl}/api/v1/auth/signup`, "Tạo tài khoản thành công. Hãy kiểm tra Email để kích hoạt tài khoản");
+        });
+
+        let handleRegister = (user, url, message) => {
+            $.post({
+                url: url,
+                data: JSON.stringify(user),
+                dataType: 'json',
+                contentType: 'application/json',
+                beforeSend: () => {
+                    $("#spinner").show();
+                },
+                complete: function () {
+                    $("#spinner").hide();
+                },
+            }).done(function (xhr) {
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+    </script>
+</th:block>
+</html>

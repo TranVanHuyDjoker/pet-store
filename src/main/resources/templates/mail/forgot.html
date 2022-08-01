@@ -1,0 +1,20 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'/>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 48px;
+        }
+    </style>
+</head>
+<body>
+<p th:text="${'Thân gửi, ' + email  }"></p><br>
+<p> Hãy nhấn vào đường dẫn bên dưới để đặt lại mật khẩu của bạn:</p><br>
+<h3><a th:href="${verifyUrl}" target=\"_self\">KÍCH HOẠT</a></h3>"
+<p>Xin chân thành cảm ơn</p><br>
+<p>Đây là email tự động vui lòng không trả lời.</p>
+</body>
+</html>

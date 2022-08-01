@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <div class="mt-2" id="alert"></div>
+        <form class="mt-1 mb-1" id="submit-form">
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="firstname">Họ và tên đệm người dùng</label>
+                    <input type="text" name="firstname" class="form-control" id="firstname" placeholder="Nhập họ và tên đệm người dùng">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="lastname">Tên người dùng</label>
+                    <input type="text" name="lastname" class="form-control" id="lastname" placeholder="Nhập tên người dùng">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="lastname">Số điện thoại</label>
+                    <input type="text" name="phonenumber" class="form-control" id="phonenumber" placeholder="Nhập số điện thoại người dùng">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="inputCity">Thành phố</label>
+                    <select onchange="handleOnChangeCity(event)" id="inputCity" class="form-control">
+                        <option selected>Chọn</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="inputDistrict">Huyện</label>
+                    <select onchange="handleOnChangeDistrict(event)" id="inputDistrict" class="form-control">
+                        <option selected>Chọn</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="inputWard">Xã</label>
+                    <select onchange="handleOnChangeWard(event)" id="inputWard" class="form-control">
+                        <option selected>Chọn</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="detail-address">Địa chỉ</label>
+                    <input type="text" name="address" class="form-control" id="detail-address" placeholder="Nhập địa chỉ">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success" id="form-title">Cập nhật</button>
+        </form>
+    </div>
+    <script th:inline="javascript">
+        let city = null;
+        let district = null;
+        let ward = null;
+
+        $("input").on('blur focusout', function () {
+            if ($("#submit-form").valid()) {
+                $('#form-title').prop('disabled', false);
+            } else {
+                $('#form-title').prop('disabled', 'disabled');
+            }
+        })
+
+        function validateInfo() {
+            $("#submit-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+
+                rules: {
+                    "firstname": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength: 20
+                    },
+                    "lastname": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 5,
+                        maxlength: 20
+                    },
+                    "phonenumber": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength:10,
+                        validatePhonenumber: true
+                    },
+                    "address": {
+                        required: true,
+                        noSpace: true,
+                        minlength:0,
+                        maxlength: 50
+                    }
+                },
+                messages: {
+                    "firstname": {
+                        required: "Vui lòng nhập họ",
+                        noSpace: "Vui lòng nhập họ",
+                        minlength: "Họ phải có ít nhất 10 ký tự",
+                        maxlength: "Họ chỉ có tối đa 20 ký tự"
+                    },
+                    "lastname": {
+                        required: "Vui lòng nhập tên",
+                        noSpace: "Vui lòng nhập tên",
+                        minlength: "Tên phải có ít nhất 10 ký tự",
+                        maxlength: "Tên chỉ có tối đa 20 ký tự"
+                    },
+                    "phonenumber": {
+                        required: "Vui lòng nhập số điện thoại",
+                        noSpace: "Vui lòng nhập số điện thoại",
+                        minlength: "Số điện thoại phải có 10 ký tự",
+                        maxlength:"Số điện thoại phải có 10 ký tự",
+                        validatePhonenumber: "Sai định dạng số điện thoại"
+                    },
+                    "address": {
+                        required: "Vui lòng nhập địa chỉ",
+                        noSpace: "Vui lòng nhập địa chỉ",
+                        minlength:"Vui lòng nhập địa chỉ",
+                        maxlength: "Địa chỉ chỉ có tối đa 50 ký tự"
+
+                    }
+                }
+            })
+        }
+        function handleUser(user){
+            $("#firstname").val(user.firstname);
+            $("#lastname").val(user.lastname);
+            $("#phonenumber").val(user.phonenumber);
+        }
+
+        $( document ).ready(function() {
+            validateInfo();
+            $.ajax({
+                url:`${baseUrl}/api/v1/users/information`,
+                type:"GET",
+            }).done(function(xhr){
+               if(xhr != null){
+                    handleUser(xhr)
+               }
+            }).fail(function(xhr){
+            })
+                $.get(`https://provinces.open-api.vn/api/p`)
+                .done(function(data){
+                    renderCities(data);
+                })
+                .fail(function(xhr){
+                });               
+        });
+
+        function handleOnChangeCity(event){
+            let {value} = event.target;
+            $.get(`https://provinces.open-api.vn/api/p/${value}`)
+                .done(function(data){
+                   city = data;
+                })
+                .fail(function(xhr){
+                });         
+            $.get(`https://provinces.open-api.vn/api/p/${value}?depth=2`)
+                .done(function(data){
+                    $("#inputDistrict").empty();
+                    renderDistricts(data.districts);
+                })
+                .fail(function(xhr){
+                });         
+        }
+
+        function handleOnChangeDistrict(event){
+            let {value} = event.target;
+            $.get(`https://provinces.open-api.vn/api/d/${value}`)
+                .done(function(data){
+                    district = data;
+                })
+                .fail(function(xhr){
+                });   
+            $.get(`https://provinces.open-api.vn/api/d/${value}?depth=2`)
+                .done(function(data){
+                    $("#inputWard").empty();
+                    renderWards(data.wards);
+                })
+                .fail(function(xhr){
+                });         
+        }
+
+        function handleOnChangeWard(event){
+            let {value} = event.target;
+            $.get(`https://provinces.open-api.vn/api/w/${value}`)
+                .done(function(data){
+                    ward = data;
+                })
+                .fail(function(xhr){
+                });         
+        }
+
+
+        function renderCities(cities){
+            cities.map((cit,index)=>{
+                if(index == 0){
+                    city = cit;
+                }
+                $("#inputCity").append(`
+                    <option value=${cit.code}>${cit.name}</option>
+                `)
+            })
+        }
+
+        function renderDistricts(districts){
+            
+            districts.map((dis,index)=>{
+                if(index == 0){
+                    district = dis;
+                }
+                $("#inputDistrict").append(`
+                    <option value=${dis.code}>${dis.name}</option>
+                `)
+            })
+        }
+
+        function renderWards(wards){
+            wards.map((wa,index)=>{
+                if(index == 0){
+                    ward = wa;
+                }
+                $("#inputWard").append(`
+                    <option value=${wa.code}>${wa.name}</option>
+                `)
+            })
+        }
+
+        $("#submit-form").submit((event)=>{
+            event.preventDefault();
+            const address = city.name + " " + district.name + " " + ward.name + " " + $("#detail-address").val();
+            const firstname = $("#firstname").val();
+            const lastname = $("#lastname").val();
+            const phonenumber = $("#phonenumber").val();
+
+            const user = {
+                lastname,
+                firstname,
+                address,
+                phonenumber
+            }
+            $.post({
+                url:`${baseUrl}/api/v1/users/information`,
+                type:"POST",
+                data:JSON.stringify(user),
+                dataType:'json',
+                contentType: 'application/json',
+            }).done(function(xhr){
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Cập nhật thông tin thành công
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function(xhr){
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            Cập nhật thông tin thất bại
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        })
+    </script>
+</th:block>
+</html>

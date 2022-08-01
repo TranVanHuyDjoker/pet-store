@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container mydiv">
+        <div id="render-body" class="row">
+        </div>
+        <div class="row mt-2" style="justify-content: center; display: grid">
+            <nav aria-label="Page navigation example">
+                <ul id="pagination" class="pagination">
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        const pathname = window.location.pathname;
+        const pathArr = pathname.split("/");
+        const slug = pathArr[1];
+        $(document).ready(function () {
+            getPets();
+        })
+        let currentPage = 1;
+        let limit = 9;
+
+        function getPets() {
+            $.get({
+                url: `${baseUrl}/api/v1/categories/${slug}/pets?currentPage=${currentPage}&limit=${limit}`,
+                dataType: 'json',
+                contentType: 'application/json'
+            })
+                .done(function (xhr) {
+                    renderPets(xhr.listDTO);
+                    renderPages(xhr.totalPages);
+                })
+        }
+
+        function renderPets(pets) {
+            pets.map((pet, index) => {
+                $("#render-body").append(`
+                <div class="col-md-4">
+                    <div class="bbb_deals">
+                        <div class="bbb_deals_slider_container">
+                            <div class=" bbb_deals_item">
+                                <div class="bbb_deals_image"><img src="${pet.primaryPhoto ? pet.primaryPhoto : "https://vnpi-hcm.vn/wp-content/uploads/2018/01/no-image-800x600.png"}" alt=""></div>
+                                <div class="bbb_deals_content">
+                                    <div class="bbb_deals_info_line d-flex flex-row justify-content-start">
+                                        <a href="${slug}/${pet.id}" class="bbb_deals_item_price">${pet.name}</a>
+                                        <div class="bbb_deals_item_price ml-auto">${pet.category.name}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `)
+            })
+        }
+
+        function renderPages(totalPages) {
+            $('#pagination').pagination({
+                total: limit * totalPages,
+                current: currentPage,
+                length: limit,
+                size: 1,
+                prev: "Truớc",
+                next: "Sau",
+                click: function (options) {
+                    currentPage = options.current;
+                    $.ajax({
+                        url: `${baseUrl}/api/v1/categories/${slug}/pets?currentPage=${options.current}&limit=${limit}`,
+                        type: "GET",
+                    }).done(function (res) {
+                        console.log(res);
+                        $("#render-body").empty();
+                        renderPets(res.listDTO);
+                    }).fail(function (error) {
+                        console.log(error)
+                    });
+                }
+            });
+        }
+    </script>
+</th:block>
+</html>

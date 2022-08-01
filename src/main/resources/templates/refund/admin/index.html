@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <th:block th:if="${#lists.isEmpty(refunds)}">
+        <h5>Chưa có đơn trả hàng nào để xử lý !</h5>
+    </th:block>
+    <th:block th:unless="${#lists.isEmpty(refunds)}">
+        <div class="container">
+            <h2>ĐƠN TRẢ HÀNG</h2>
+            <div id="alert" class="alert"></div>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Mã đơn trả hàng</th>
+                    <th>Mã đơn hàng</th>
+                    <th>Tình trạng</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
+                    <th>Thực thi</th>
+                </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                <tr class="table table-hover-custome"
+                    th:each=" refund: ${refunds}">
+                    <th scope="row" th:text="${refund.id}"></th>
+                    <td th:text="${refund.orderId}"></td>
+                    <td th:text="${refund.status}"></td>
+                    <td th:text="${refund.createAt}"></td>
+                    <td th:text="${refund.updateAt}"></td>
+                    <td>
+                        <a class="btn btn-outline-success" >Chấp nhận</a>
+                        <a class="btn btn-outline-danger" >Từ chối</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="col-5">
+                <nav aria-label="Page navigation example">
+                    <ul id="pagination" class="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </th:block>
+
+</th:block>
+</html>

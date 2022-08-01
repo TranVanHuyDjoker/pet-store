@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container rounded bg-white mt-5">
+        <div class="row d-flex justify-content-center pb-5">
+            <div class="col-sm-5 col-md-5 ml-1">
+                <h4>Thông tin khách hàng</h4>
+                <div>
+                    <div class="pb-3">
+                        <div class="d-flex flex-row align-content-center">
+                            Họ và tên: 	&nbsp;
+                            <span th:text="${order.fullname}"></span>
+                        </div>
+                        <div class="d-flex flex-row align-content-center">
+                            Địa chỉ: 	&nbsp;
+                            <span th:text="${order.address}"></span>
+                        </div>
+                        <div class="d-flex flex-row align-content-center">
+                            Số điện thoại: 	&nbsp;
+                            <span th:text="${order.phonenumber}"></span>
+                        </div>
+                        <div class="d-flex flex-row align-content-center">
+                            Tình trạng đơn hàng: 	&nbsp;
+                            <th:block th:switch="${order.status}">
+                                <span th:case="'VERIFY'">
+                                    Chờ xác nhận
+                                </span>
+                                <span th:case="'SHIPPING'">
+                                    Đang vận chuyển
+                                </span>
+                                <span th:case="'DONE'">
+                                    Giao hàng thành công
+                                </span>
+                                <span th:case="'CANCEL'">
+                                    Đơn hàng bị huỷ
+                                </span>
+                            </th:block>
+                        </div>
+                        <div class="d-flex flex-row align-content-center">
+                            Tình trạng thanh toán:  &nbsp;
+                            <p th:text="${order.isPaid} ? 'Đã thanh toán' : 'Chưa thanh toán' "></p>
+                        </div>
+                        <div class="d-flex flex-row align-content-center">
+                           Ngày tạo đơn hàng: &nbsp;
+                           <span th:text="${order.createAt}"></span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+            <div class="col-sm-3 col-md-4 offset-md-1 mobile">
+            
+                <div class="bg-light rounded d-flex flex-column">
+                    <div class="p-2 ml-3">
+                        <h4>Tổng hoá đơn</h4>
+                    </div>
+                    <div id="items">
+                        <th:block th:each="item : ${order.orderItems}">
+                            <div class="p-2 d-flex">
+                                <div class="col-4"><span th:text="${item.petName}"></span></div>
+                                <div class="col-1" style="width: 20px; height: 20px;" th:styleappend="'background:'+ ${item.color}"> </div>
+                                <div class="col-3">SL: <span th:text="${item.quantity}"></span></div>
+                                <div class="col-3">$<span th:text="${item.price}"></span></div>
+                            </div>
+                        </th:block>
+                       
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+                    <div class="p-2 d-flex pt-3">
+                        <div class="col-8">Hãng vận chuyển: <span th:text="${order.delivery}"></span></div>
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+                    <div class="p-2 d-flex pt-3">
+                        <div class="col-8">Phương thức thanh toán: <span th:text="${order.paymentMethod}"></span></div>
+                    </div>
+                    <div class="border-top px-4 mx-3"></div>
+                    <div class="p-2 d-flex pt-3">
+                        <div class="col-8"><b>Tổng thành tiền: </b></div>
+                        <div class="ml-auto"><b class="green">$<span th:text="${order.totalPrice}"></span></b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3 col-md-4 offset-md-1 mobile">
+            <form th:action="@{'/admin/orders/mail/' + ${order.id}}" method="get">
+                <button type="submit" class="btn btn-primary">Resend Email</button>
+            </form><br/>
+            <form th:action="@{'/admin/orders/sms/' + ${order.id}}" method="get">
+                <button type="submit" class="btn btn-primary">Resend SMS</button>
+            </form>
+
+        </div>
+    </div>
+<script>
+</script>
+</th:block>
+
+</html>

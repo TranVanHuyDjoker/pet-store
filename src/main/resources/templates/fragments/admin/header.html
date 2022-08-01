@@ -1,0 +1,39 @@
+<header class="header" xmlns:th="http://www.thymeleaf.org">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/"><img th:src="@{/assets/images/logo.png}" width="100px" height="100px"/></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent" >
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" th:href="@{/admin}">PET STORE <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Quản trị
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" th:href="@{/admin/categories}">Danh mục</a>
+                        <a class="dropdown-item" th:href="@{/admin/pets}">Thú cưng</a>
+                        <a class="dropdown-item" th:href="@{/admin/orders}">Đơn hàng</a>
+                        <a class="dropdown-item" th:href="@{/admin/report}">Thống kê</a>
+                        <a class="dropdown-item" th:href="@{/admin/refunds}">Đơn trả hàng</a>
+                        <a class="dropdown-item" th:href="@{/admin/promotion-codes}">Mã giảm giá</a>
+                    </div>
+                </li>
+            </ul>
+
+                <th:block sec:authorize="isAuthenticated()">
+                    Xin chào,&nbsp; <span class="text-uppercase font-weight-bold" sec:authentication="name"></span> &nbsp;
+
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="btn btn-outline-dark "> Đăng xuất </button>
+                    </form>
+                </th:block>
+
+        </div>
+    </nav>
+
+</header>

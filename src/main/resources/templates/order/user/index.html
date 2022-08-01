@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <th:block th:if="${#lists.isEmpty(orders)}">
+        <h5>Người dùng chưa đặt đơn hàng nào !</h5>
+    </th:block>
+    <th:block th:unless="${#lists.isEmpty(orders)}">
+        <div class="container">
+            <h2>ĐƠN HÀNG</h2>
+            <div id="alert" class="alert"></div>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <th>Phương thức</th>
+                    <th>Tổng thành tiền</th>
+                    <th>Thanh toán</th>
+                    <th>Tình trạng</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
+                    <th>Thực thi</th>
+                </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                <tr class="table table-hover-custome"
+                    th:each="order,index : ${orders}">
+                    <th scope="row" th:text="${order.id}"></th>
+                    <td th:text="${order.paymentMethod}"></td>
+                    <td>$<span th:text="${order.totalPrice}"></span></td>
+                    <td th:text="${order.isPaid} ? 'Đã thanh toán' : 'Chưa thanh toán' "></td>
+                    <td th:text="${order.status}"></td>
+                    <td th:text="${order.createAt}"></td>
+                    <td th:text="${order.updateAt}"></td>
+                    <td>
+                        <a
+                                class="btn btn-outline-info "
+                                th:href="@{/orders/} + ${order.id}">Chi tiết
+                        </a>
+                </tr>
+                </tbody>
+            </table>
+            <div class="col-5">
+                <nav aria-label="Page navigation example">
+                    <ul id="pagination" class="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </th:block>
+
+</th:block>
+</html>

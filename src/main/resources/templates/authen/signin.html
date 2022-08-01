@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <form th:action="@{/signin}" method="post" id="signin-form">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Tên tài khoản</label>
+                    <input type="text" class="form-control" name="username" placeholder="Mời nhập tên tài khoản"
+                           required/>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Mật khẩu</label>
+                    <input type="password" class="form-control" name="password" placeholder="Mời nhập mật khẩu"
+                           required/>
+                </div>
+            </div>
+            <div th:if="${param.error}">
+                <p class="text-danger">Tài khoản hoặc mật khẩu không đúng!</p>
+            </div>
+
+            <div th:if="${param.logout}">
+                <p class="text-warning">Đăng xuất thành công!</p>
+            </div>
+            <button type="submit" disabled id="btn" class="btn btn-primary">Đăng nhập</button>
+        </form>
+        <div>
+            Bạn chưa có tài khoản? <a href="/signup">Đăng ký</a>
+        </div>
+        <div>
+            Quên mật khẩu? <a href="/forgot">Tìm lại</a>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        function validateSignin() {
+            $("#signin-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+
+                rules: {
+                    "username": {
+                        required: true,
+                        noSpace: true
+                    },
+                    "password": {
+                        required: true,
+                        noSpace: true
+                    }
+                },
+                messages: {
+                    "username": {
+                        required: "Vui lòng nhập tên tài khoản",
+                        noSpace: "Vui lòng nhập tên tài khoản"
+                    },
+                    "password": {
+                        required: "Vui lòng nhập mật khẩu",
+                        noSpace: "Vui lòng nhập mật khẩu"
+                    }
+                }
+            })
+        }
+        $("input").on('blur focusout', function () {
+            if ($("#signin-form").valid()) {
+                $("#btn").prop('disabled', false);
+            } else {
+                $('#btn').prop('disabled', 'disabled');
+            }
+        })
+        $(document).ready(function(){
+            validateSignin();
+        })
+
+    </script>
+</th:block>
+</html>

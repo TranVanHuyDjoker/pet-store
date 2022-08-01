@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        h1{
+            color: brown;
+        }
+        .quotation {
+            width: 100%;
+        }
+        .quotation, .quotation th, .quotation td {
+            border: 1px solid brown;
+            border-collapse: collapse;
+        }
+        .quotation th {
+            background-color: brown;
+            color: white;
+        }
+        .title{
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<img src="/assets/images/logo.png" width="100px" height="100px"/>
+<h1 style="text-align: center;font-weight: bold">HÓA ĐƠN </h1>
+<table>
+
+    <h2 style="text-align: center ; font-weight: bold">THÔNG TIN ĐƠN HÀNG</h2>
+    <tr>
+        <td >
+            <span class="title">Mã đơn hàng: </span>
+            <span th:text="${id}"></span>
+        </td>
+    </tr>
+    <tr>
+        <td >
+            <span class="title">Tên khách hàng: </span>
+            <span th:text="${fullname} "></span>
+        </td>
+    </tr>
+
+    <tr>
+        <td >
+            <span class="title">Địa chỉ: </span>
+            <span th:text="${address}"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span class="title">Số điện thoại: </span>
+            <span th:text="${phonenumber}"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span class="title">Ngày tạo đơn hàng: </span>
+            <span th:text="${createAt}"></span>
+        </td>
+    </tr>
+</table>
+<br />
+<table class="quotation">
+    <tr>
+        <th>STT</th>
+        <th>Tên thú cưng</th>
+        <th>Màu sắc</th>
+        <th>Giới tính</th>
+        <th>Giá</th>
+    </tr>
+    <tr th:each="item, iterStat: ${orderitems}">
+        <td th:text="${iterStat.index + 1}"></td>
+        <td th:text="${item.pet.name}"></td>
+        <td th:switch="${item.pet.colorType}">
+            <span th:case="'BROWN'">Màu nâu</span>
+            <span th:case="'WHITE'">Màu trắng</span>
+            <span th:case="'BLACK'">Màu đen</span>
+            <span th:case="'RED'">Màu đỏ</span>
+            <span th:case="'YELLOW'">Màu vàng</span>
+        </td>
+        <td th:text="${item.pet.gender eq 'MALE' ? 'Đực' : 'Cái'}"></td>
+        <td th:text="${item.price}"></td>
+    </tr>
+    <tr>
+        <td colspan="4"></td>
+        <td th:text="${'Tổng số tiền:' + totalPrice+'$' }"></td>
+    </tr>
+</table>
+<p style="position: relative ;padding-top: 500px ; float: right ; padding-right: 20px">Địa chỉ: Tầng 7, Số 98, Hoàng Quốc Việt, Cầu Giấy, Hà Nội<br/>Điện thoại : 0379730449</p>
+</body>
+</html>

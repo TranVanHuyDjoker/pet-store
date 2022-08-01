@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+	<div class="container">
+		<div class="card">
+			<div class="card-body">
+				<h3 id="name" class="card-title"></h3>
+				<h6 id="category" class="card-subtitle"></h6>
+				<div class="row">
+					<div class="col-lg-5 col-md-5 col-sm-6">
+						<div class="white-box text-center" id="primary-photo"></div>
+					</div>
+					<div class="col-lg-7 col-md-7 col-sm-6">
+						<h4 class="box-title mt-5">Mô tả</h4>
+						<p id="description"></p>
+						<h2 class="mt-5">
+							$<span id="price"></span><small class="text-danger">(-$<span id="sale-price"></span>)</small>
+						</h2>
+						<button class="btn btn-dark btn-rounded mr-1" onclick="addToCart()" data-toggle="tooltip" data-original-title="Add to cart">
+							<i class="fa fa-shopping-cart"></i>
+						</button>
+						<button onclick="buyNow()" class="btn btn-primary btn-rounded">Mua ngay</button>
+						<ul class="list-unstyled">
+							<li><i class="fa fa-check text-success"></i>Giới tính: <span id="gender"></span></li>
+							<li><i class="fa fa-check text-success"></i>Màu sắc: <span id="color"></span></li>
+						</ul>
+					</div>
+					<div class="col-lg-12 col-md-12 col-sm-12">
+						<h3 class="box-title mt-5">Thông tin chi tiết</h3>
+						<div class="table-responsive">
+							<table  class="table table-striped table-product">
+								<tbody id="table-info">
+								
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+        <script th:inline="javascript">
+        const pathname= window.location.pathname;
+        const pathArr = pathname.split("/");
+        const petId = pathArr[2];
+        let primaryPhotoPath = "";
+        let pet = null;
+        $( document ).ready(function() {
+            $.get({
+                url:`${baseUrl}/api/v1/pets/${petId}`,
+                dataType:'json',
+                contentType: 'application/json',
+            })
+                .done(function(xhr){
+                    pet = xhr;
+                    $("#pet-name").append(`${xhr.name}`);
+                    $("#price").append(`${xhr.price}`);
+                    $("#sale-price").append(`${xhr.salePrice}`);
+                    $("#description").append(`${xhr.description == null ? "" : xhr.description}`)
+                    $("#gender").append(`${xhr.gender == "MALE" ? "Đực" : "Cái"}`)
+                    $("#color").css({"background": xhr.colorType,"width":"20px","height":"20px","display":"inline-flex"})
+                    $("#name").append(`${xhr.name}`)
+                    $("#category").append(`${xhr.category.name}`)
+                    getPetDetails();
+                    getPhotos();
+                })
+                .fail(function(xhr){
+                    console.log(xhr);
+                });
+        })
+
+        function getPetDetails(){
+            $.get({
+                url:`${baseUrl}/api/v1/pets/${petId}/details`,
+                dataType:'json',
+                contentType: 'application/json',
+            })
+            .done(xhr=>{
+                renderPetDetails(xhr)
+            })
+            .fail(xhr=>{
+               $("#table-info").empty();
+            })
+        }
+
+
+
+        function renderPetDetails(details){
+            $("#table-info").append(`
+            <tr>
+								<td width="390">Nguồn gốc</td>
+									<td>${details.origin}</td>
+								</tr>
+								<tr>
+									<td>Bố thú cưng</td>
+									<td>${details.dadType}</td>
+								</tr>
+								<tr>
+									<td>Mẹ thú cưng</td>
+									<td>${details.momType}</td>
+								</tr>
+								<tr>
+									<td>Tuổi</td>
+									<td>${details.age} tháng tuổi</td>
+								</tr>
+								<tr>
+									<td>Mức độ thuần chủng</td>
+									<td>${details.purebred}%</td>
+								</tr>
+								<tr>
+									<td>Tiêm phòng</td>
+									<td>${details.vaccination}</td>
+								</tr>
+            `)
+        }
+        function getPhotos(){
+            $.get({
+                url:`${baseUrl}/api/v1/pets/${petId}/photos`,
+                dataType:'json',
+                contentType: 'application/json',
+            })
+                .done(function(xhr){
+                    renderPhotos(xhr);
+                })
+                .fail(function(xhr){
+                    console.log(xhr);
+                });
+        }
+        function renderPhotos(photos){
+            let primaryPhoto = null;
+            photos.find(photo =>{
+                if(photo.primaryPhoto){
+                    primaryPhoto = photo;
+                }
+            });
+            if(!primaryPhoto){
+         
+                photos.map((photo,index)=>{
+                if(index == 0){
+                    primaryPhotoPath = photo.photoPath;
+                    $("#primary-photo").append(`
+                    <img src="${baseUrl}/${photo.photoPath}" class="img-responsive">
+                    `)
+                }      
+            })
+            }else{
+            photos.map((photo)=>{
+                primaryPhotoPath = primaryPhoto.photoPath;
+                if(photo.primaryPhoto){
+                    $("#primary-photo").append(`
+                    <img style="width:100%" src="${baseUrl}/${photo.photoPath}" class="img-responsive">
+                    `)
+                }
+            })
+            }
+        }
+		function buyNow(){
+			let cart = localStorage.getItem("cart") == null ? [] : JSON.parse( localStorage.getItem("cart"));
+			if(cart.findIndex(cartItem => cartItem.petId == pet.id) !== -1){
+				alert("Thú cưng " + pet.name + " đã được thêm vào giỏ hàng rồi!");
+				return;
+			}
+			const item ={
+				petId: pet.id,
+				petName: pet.name,
+				color: pet.colorType,
+				gender: pet.gender,
+				photo: primaryPhotoPath,
+				price: pet.price - pet.salePrice
+			}
+			cart.push(item);
+			localStorage.setItem("cart",JSON.stringify(cart));
+			window.location.href= "/checkout";
+		}
+
+
+        function addToCart(){
+            let cart = localStorage.getItem("cart") == null ? [] : JSON.parse( localStorage.getItem("cart"));
+            if(cart.findIndex(cartItem => cartItem.petId == pet.id) !== -1){
+                alert("Thú cưng " + pet.name + " đã được thêm vào giỏ hàng rồi!");
+                return;
+            }
+            const item ={
+                petId: pet.id,
+                petName: pet.name,
+                color: pet.colorType,
+                gender: pet.gender,
+                photo: primaryPhotoPath,
+                price: pet.price - pet.salePrice   
+            }
+            cart.push(item);
+            localStorage.setItem("cart",JSON.stringify(cart));
+        }
+
+    </script>
+</th:block>
+</html>

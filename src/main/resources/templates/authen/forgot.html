@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{user-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <div id="alert"></div>
+        <form id="forgot-form" method="post">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" class="form-control" id="email" placeholder="Mời nhập địa chỉ Email">
+                </div>
+            </div>
+            <button type="submit" id="btn" class="btn btn-primary">Tìm lại mật khẩu</button>
+        </form>
+        <div id="spinner" class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+       </div>
+    </div>
+
+    <script th:inline="javascript">
+        $("input").on('blur focusout', function () {
+            if ($("#forgot-form").valid()) {
+                $('#btn').prop('disabled', false);
+            } else {
+                $('#btn').prop('disabled', 'disabled');
+            }
+        })
+
+        function validateForgot(){
+            $("#forgot-form").validate({
+                onkeyup: false,
+                onclick: false,
+                onfocusout: false,
+                focusCleanup: true,
+                rules: {
+                    "email": {
+                        required: true,
+                        noSpace: true,
+                        minlength: 10,
+                        maxlength: 40,
+                        email: true
+                    }
+                },
+                messages: {
+                    "email": {
+                        required: "Vui lòng nhập địa chỉ Email ",
+                        noSpace: "Vui lòng nhập địa chỉ Email ",
+                        minlength: "Địa chỉ Email phải có ít nhất 10 ký tự",
+                        maxlength: "Địa chỉ Email chỉ có nhiều nhất nhất 40 ký tự",
+                        email: "Sai định dạng địa chỉ Email"
+                    }
+                }
+            })
+        }
+
+        $(document).ready(function () {
+            validateForgot();
+            $("#spinner").hide();
+        })
+
+
+
+        $("#forgot-form").submit(function(e) {
+            e.preventDefault();
+            if(!$("#forgot-form").valid()){
+                return;
+            }
+            let email = $("#email").val();
+            let user={
+                email
+            };
+            handleForgot(user,`${baseUrl}/api/v1/auth/forgot`);
+        });
+
+        let handleForgot = (user,url)=>{
+            $.post({
+                url:url,
+                data:JSON.stringify(user),
+                dataType:'json',
+                contentType: 'application/json',
+                beforeSend: ()=>{
+                    $("#spinner").show();
+                }
+            }).done(function(xhr){
+                $("#spinner").hide();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${xhr}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function(xhr){
+                $("#spinner").hide();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            Có lỗi xảy ra vui lòng thử lại sau!
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+    </script>
+</th:block>
+</html>

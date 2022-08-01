@@ -1,0 +1,90 @@
+spring:
+    resource:
+        add-mappings: false
+    datasource:
+        url: jdbc:postgresql://localhost:5432/demothai
+        username: postgres
+        password: 12345678
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+        hibernate:
+            ddl-auto: update
+    main:
+        allow-circular-references: true
+
+    servlet:
+        multipart:
+            max-file-size: 1MB
+            max-request-size: 2MB
+
+    mvc:
+        throw-exception-if-no-handler-found: true
+        pathmatch:
+            matching-strategy: ant_path_matcher
+        hiddenmethod:
+            ilter:
+                enabled: true
+
+swagger:
+    url: https://petstore.swagger.io/v2
+upload:
+    path: upload//
+
+base-url:
+    http://localhost:8888
+mailServer:
+    host: smtp.gmail.com
+    port: 587
+    email: huy.tranvan.ncc@gmail.com
+    password: fsbetbqgpbhdpadw
+    tls: true
+    isSSL: false
+    properties:
+        mail:
+            smtp:
+                auth: true
+                starttls:
+                    enable: true
+                connectiontimeout: 5000
+                timeout: 5000
+                writetimeout: 5000
+    default-encoding: UTF-8
+    smtp: true
+server:
+    port: 8888
+minio:
+    bucket:
+        name: photopet
+    access:
+        key: minioadmin
+        secret: minioadmin
+    url: http://localhost:9000
+logging:
+    level:
+        root: INFO
+        com.hivetech: INFO
+        org.springframework: ERROR
+    file:
+        name: logs/dev.log
+    pattern:
+        file: "%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n"
+    logback:
+        rollingpolicy:
+            max-file-size: 1024KB
+            max-history: 50
+pdf:
+    directory: "D:\\"
+
+tinypng:
+    key: rGwR3dNyvxkHWy1mrXFSFqD4BQr7zZyR
+
+paypal:
+    client-id: AeppIw92LdATqDyTEgHbIsMqNhIHUMzmKUAZ4NHs0ZNqxXoXGUCIwJ4qTTjfsuSXDEQF_t7jcgsDQDu3
+    serect-key: EOyuKbcn1KDQVhi3KIT1OVdAQhVNNrfsd6fOaW1OA1Oj1DDEk3sS2hq9OJU47pt8mY9mEHtK8IJzqFyV
+    mode: sandbox
+
+telnyx:
+    phonenumber: +18773202874
+    key: KEY0180B5DD0F15046F78F96BD89EE92D53_Mdt6Mp0CsbD7WarHRfIbbP
+
+prefix: PS

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extrasd/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+    <div class="container">
+        <a href="/admin/categories">&lt;Danh mục</a>
+        <div class="mt-2" id="alert"></div>
+        <form class="mt-1 mb-1" id="submit-form">
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="cateName">Tên danh mục</label>
+                    <input type="text" name="cateName" class="form-control" id="cateName"
+                           placeholder="Nhập tên danh mục">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-5">
+                    <label for="inputCategory">Danh mục cha</label>
+                    <select id="inputCategory" class="form-control">
+                        <option value="0">Mặc định</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success" disabled id="form-title"></button>
+        </form>
+    </div>
+
+    <script th:inline="javascript">
+        function validate() {
+            $("#submit-form").validate({
+                rules: {
+                    "cateName": {
+                        required: true,
+                        noSpace: true
+                    }
+                },
+                messages: {
+                    "cateName": {
+                        required: "Vui lòng nhập tên danh mục",
+                        noSpace: "Vui lòng nhập tên danh mục"
+                    }
+                }
+            })
+        }
+
+        $("input").on('blur', function () {
+            console.log($("#submit-form").valid());
+            if ($("#submit-form").valid()) {
+                $('#form-title').prop('disabled', false);
+            } else {
+                $('#form-title').prop('disabled', 'disabled');
+            }
+        })
+        let idParam = getUrlParams("id");
+
+        function categoriesDropDown(categories) {
+            if (idParam) {
+                categories.map((category, index) => {
+                    if (category.id != idParam) {
+                        $("#inputCategory").append(`
+                        <option value="${category.id}">${category.name}</option>
+                    `)
+                    }
+                })
+            } else {
+                categories.map((category, index) => {
+                    $("#inputCategory").append(`
+                 <option value="${category.id}">${category.name}</option>
+                `)
+                })
+            }
+        }
+
+        $(document).ready(function () {
+            validate();
+            $.get({
+                url: `${baseUrl}/api/v1/categories`,
+                contentType: "application/json",
+                dataType: "json"
+            })
+                .done(function (xhr) {
+                    categoriesDropDown(xhr);
+                })
+                .fail(function (xhr) {
+                    $("#alert").empty();
+                    $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                    console.log(xhr);
+                });
+
+            if (idParam) {
+                $('#form-title').prop('disabled', false);
+                $.get({
+                    url: `${baseUrl}/api/v1/categories/${idParam}`,
+                    contentType: "application/json",
+                    dataType: "json"
+                })
+                    .done(function (xhr) {
+                        $("#cateName").val(xhr.name);
+                        $("#inputCategory").val(xhr.parentId);
+                    })
+                    .fail(function (xhr) {
+                        $("#alert").empty();
+                        $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+                    });
+                $("#form-title").append("Cập nhật")
+                return;
+            }
+            $("#form-title").append("Thêm");
+        });
+        $("#submit-form").submit(function (e) {
+            e.preventDefault();
+            if(!$("#submit-form").valid()){
+                return;
+            }
+            let name = $("#cateName").val();
+            let parentId = $("#inputCategory").val();
+            let cate = {
+                name,
+                parentId
+            };
+            if (idParam) {
+                handleSubmit(cate, 'PUT', `${baseUrl}/api/v1/categories/${idParam}`, "Cập nhật danh mục thành công!");
+                return;
+            }
+            handleSubmit(cate, 'POST', `${baseUrl}/api/v1/categories`, "Thêm danh mục thành công!");
+        });
+
+        function handleSubmit(data, type, url, successMessage) {
+            $.ajax({
+                url: url,
+                type: type,
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json',
+            }).done(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                           ${successMessage}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            }).fail(function (xhr) {
+                console.log(xhr);
+                $("#alert").empty();
+                $("#alert").append(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            ${xhr.responseJSON.message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                `)
+            })
+        }
+
+    </script>
+</th:block>
+</html>

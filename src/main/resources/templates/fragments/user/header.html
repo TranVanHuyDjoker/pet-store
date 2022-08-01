@@ -1,0 +1,54 @@
+<header class="header" xmlns:th="http://www.thymeleaf.org">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/"><img th:src="@{/assets/images/logo.png}" width="100px" height="100px"/></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Danh mục
+                    </a>
+                    <div id="category-dropdown" class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    </div>
+                </li>
+            </ul>
+
+            <th:block sec:authorize="isAuthenticated()">
+                <div class="navbar-nav">
+                    <a class="btn btn-outline-info" href="/cart" >
+                        Giỏ hàng
+                    </a>
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#"role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="text-uppercase font-weight-bold" sec:authentication="name"></span> &nbsp;
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="/information">Cập nhật thông tin</a>
+                                <a class="dropdown-item" href="/orders">Danh sách đơn hàng</a>
+                                <a class="dropdown-item" href="/refunds">Danh sách đơn trả hàng</a>
+                            </div>
+                        </li>
+                        <form th:action="@{/logout}" method="post">
+                            <button type="submit" class="btn btn-outline-dark "> Đăng xuất </button>
+                        </form>
+                    </ul>
+                </div>
+            </th:block>
+            <th:block sec:authorize="!isAuthenticated()">&nbsp;
+                <div>
+                    <a class="btn btn-outline-info " href="/cart" >
+                        Giỏ hàng
+                    </a>
+                    <a class="btn btn-outline-dark " href="/signin" >
+                        Đăng nhập
+                    </a>
+                </div>
+            </th:block>
+        </div>
+    </nav>
+
+</header>

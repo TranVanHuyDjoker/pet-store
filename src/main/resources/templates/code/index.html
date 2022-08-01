@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:with="http://www.thymeleaf.org/extras/with"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+      layout:decorate="~{admin-layout}">
+<th:block layout:fragment="content">
+
+    <div class="container">
+        <h2>MÃ GIẢM GIÁ</h2>
+        <a th:href="@{/admin/promotion-codes/add}" class="btn btn-success mt-2 mb-1">Thêm mã giảm giá</a>
+        <button id="btn-select-all" onclick="onClick()" class="btn btn-success mt-2 mb-1">Tạo lịch</button>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th><input id="all" type="checkbox" onchange="onChangeSelectAll(event)"/></th>
+                <th>#</i></th>
+                <th>Mã</th>
+                <th>Thể loại</th>
+                <th>Giảm giá</th>
+                <th>Số lượng</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Thực thi</th>
+            </tr>
+            </thead>
+            <tbody id="pets-table-body">
+            </tbody>
+            <div class="form-row select-all">
+                <div class="form-group col-md-4">
+                    <label for="expireDate">Đặt lịch</label>
+                    <input type="datetime-local" name="expireDate" class="datePicker  form-control" id="expireDate"
+                           placeholder="Chọn ngày hết hạn mã giảm giá">
+                </div>
+                <button id="schedule" onclick="createSchedule()" class="btn btn-success">Tạo</button>
+            </div>
+        </table>
+    </div>
+
+    <script th:inline="javascript">
+        let toggle = false;
+        let ids = [];
+        let selectedIds = [];
+        $(document).ready(function () {
+            getCodes();
+            $(".select-all").hide();
+        })
+
+        function createSchedule() {
+            console.log(ids);
+
+        }
+
+        function onClick() {
+            toggle = !toggle;
+            if (toggle == true) {
+                $(".select-all").show();
+            } else {
+                $(".select-all").hide();
+            }
+        }
+
+        function choose(event, id) {
+            $("#all").prop("checked",false);
+            let {checked} = event.target;
+            if (checked) {
+                selectedIds.push(id);
+                console.log(selectedIds);
+            } else {
+                selectedIds = selectedIds.filter(selectedId => selectedId != id);
+                console.log(selectedIds);
+            }
+        }
+
+        function onChangeSelectAll(event) {
+            let {checked} = event.target;
+            $("#all").prop("checked",checked);
+            ids.map(id => {
+                $("#ck-" + id).prop('checked', checked);
+            });
+            if (!checked) {
+                selectedIds = [];
+            } else {
+
+                selectedIds = ids;
+            }
+        }
+
+        function getCodes() {
+            $.get({
+                url: `${baseUrl}/api/v1/promotion-codes`,
+                dataType: 'json',
+                contentType: 'application/json'
+            })
+                .done(xhr => {
+                    renderCodes(xhr);
+                })
+        }
+
+        function renderCodes(codes) {
+            ids = [];
+            codes.forEach((code, index) => {
+                ids.push(code.id);
+                $("#pets-table-body")
+                    .append(`<tr>`)
+                    .append(`<td id="ck-box-${code.id}"><input id="ck-${code.id}" onchange="choose(event,${code.id})" type="checkbox" /></td>`)
+                    .append(`<td>${index + 1}</td>`)
+                    .append(`<td>${code.code}</td>`)
+                    .append(`<td>${code.type == "PET" ? "Thú cưng" : "Vận chuyển"}</td>`)
+                    .append(`<td>${code.saleAmount} </td>`)
+                    .append(`<td>${code.quantity} </td>`)
+                    .append(`<td>${code.createAt}</td>`)
+                    .append(`<td>${code.expiredAt}</td>`)
+                    .append(`<td>
+
+                                <a href="/admin/promotion-codes/update?id=${code.id}" class="btn btn-warning">Sửa</a>
+                                <button onClick="deleteCode(${code.id})" type="button" class="btn btn-danger">Xóa</button>
+                            </td>`)
+                    .append("</tr>")
+            });
+        };
+
+        function deleteCode(id) {
+            if (confirm("Bạn chắc chắn muốn xóa mã này này chứ?")) {
+                $.ajax({
+                    url: `${baseUrl}/api/v1/promotion-codes/${id}`,
+                    type: "DELETE",
+                    dataType: 'json',
+                    contentType: 'application/json'
+                })
+                    .done((xhr) => {
+                        $("#alert").empty();
+                        $("#pets-table-body").empty();
+                        $("#alert").append(`
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                Xóa mã giảm giá thành công
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                    `)
+                        getCodes();
+                    })
+                    .fail((xhr) => {
+                        $("#alert").empty();
+                        $("#alert").append(`
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                ${xhr.responseJSON.message}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                    `)
+                    })
+            }
+        }
+
+
+    </script>
+</th:block>
+
+</html>
